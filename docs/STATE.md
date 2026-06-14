@@ -4,7 +4,7 @@
 
 - Date: 2026-06-14
 - Repository: `Codex_Discord_BOT`
-- Phase: Worker prompt command skeleton with durable session registry
+- Phase: Discord smoke passed; NAS Docker bridge scaffold started
 - Runtime code: Gateway client and guild slash command skeleton available, with worker-backed `/new`, `/attach`, `/session`, `/abort`, and `/ask`; runtime session mappings can persist to `.discord-bot-state/sessions.json`
 - Primary direction: separate Discord pilot, not a Telegram rewrite
 
@@ -56,12 +56,24 @@ The planned model is:
   - `DISCORD_SESSION_STORE_PATH` defaults to `.discord-bot-state/sessions.json`, which is ignored by Git.
   - Runtime bot login now uses the file-backed registry so mappings survive process restarts.
 - Validation passed after this slice: `npm test` (33 tests), `npm run typecheck`, `npm run build`, and `ggshield secret scan path --recursive --yes --use-gitignore .`.
+- Live Discord smoke passed locally:
+  - Guild-scoped commands registered successfully.
+  - Bot logged in as `TEST_ONLY_DISCORD_BOT#0000`.
+  - `/doctor` reported `Worker health: remote-worker`.
+  - `/new` created a worker session.
+  - `/session` reported the worker session as reachable.
+- NAS Docker bridge scaffold added under `discord_nas_bridge/`:
+  - Docker runtime uses `restart: unless-stopped`.
+  - NAS env example is separate from local `.env`.
+  - Runtime state is mounted under `/data`.
+- Validation passed after this slice: `npm test` (33 tests), `npm run typecheck`, `npm run build`, `docker compose -f discord_nas_bridge/docker-compose.yml config` with temporary example env, and `ggshield secret scan path --recursive --yes --use-gitignore .`.
+- Docker image build was attempted but could not run locally because the Docker daemon was unavailable (`dockerDesktopLinuxEngine` pipe missing).
 
 ## Next steps
 
-1. Create local `.env` from `.env.example` outside Git and add the real Discord token.
-2. Register guild-scoped slash commands against `Private Discord Server`.
-3. Run a private Discord smoke test for `/doctor`, `/session`, `/workers`, `/new`, `/attach`, `/handoff`, `/abort`, and `/ask`.
+1. Test `/ask` against the current local worker and decide whether the worker needs a richer Codex thread response contract.
+2. Run Docker image build on a machine where Docker daemon is available.
+3. Prepare NAS deployment handoff: copy `discord_nas_bridge/.env.nas.example` to `.env.nas` on NAS and replace `WORKER_PC_IP`.
 4. Add incremental Discord message editing/chunking for long streamed `/ask` responses.
 5. Add file-locking or atomic write hardening for the session store if multiple bot processes are ever allowed.
 6. Add private Discord smoke checklist before treating live behavior as done.
@@ -76,6 +88,7 @@ The planned model is:
 - `.env.example` contains only fake placeholders and public/non-secret Discord IDs.
 - The real `.env` must stay local and ignored; `DISCORD_LOGIN` and `DISCORD_REGISTER_COMMANDS` default to `false`.
 - Runtime session state belongs under `.discord-bot-state/` by default and must not be committed.
+- NAS runtime files belong under `discord_nas_bridge/`; real `discord_nas_bridge/.env.nas` and `discord_nas_bridge/data/` runtime contents must not be committed.
 
 ## Discord pilot identifiers
 

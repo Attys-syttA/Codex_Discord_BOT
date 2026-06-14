@@ -73,3 +73,11 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git diff --check`.
 - Eredmeny: Letrejott a `FileSessionRegistry`, amely helyi JSON store-ba menti a session metadata-t. A `DISCORD_SESSION_STORE_PATH` alapertelmezese `.discord-bot-state/sessions.json`, a runtime login pedig file-backed registryt hasznal. A suite 33 zold tesztet futtat, typecheck/build sikeres, `ggshield` nem talalt secretet.
 - Nyitott follow-up: Commit/push; utana valodi `.env`, guild command registration es privat Discord smoke.
+
+## 2026-06-14 14:26 +02:00
+
+- Cel: NAS-on futtathato Discord bridge scaffold letrehozasa Docker alapon, kulon runtime/env hatarokkal.
+- Modositott fajlok: `.dockerignore`, `.gitignore`, `package.json`, `src/discord-bot.ts`, `discord_nas_bridge/Dockerfile`, `discord_nas_bridge/docker-compose.yml`, `discord_nas_bridge/.env.nas.example`, `discord_nas_bridge/README.hu.md`, `discord_nas_bridge/data/.gitkeep`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `docker compose -f discord_nas_bridge/docker-compose.yml config` ideiglenes `.env.nas`-szal; `docker build -f discord_nas_bridge/Dockerfile -t codex-discord-bridge:local .`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git diff --check`.
+- Eredmeny: Letrejott a `discord_nas_bridge/` mappa NAS Dockerfile-lal, compose definicioval, kulon `.env.nas.example` fajllal es `/data` volume-mal. A Discord adapter `clientReady` eventre es `MessageFlags.Ephemeral` hasznalatra lett frissitve. A Node teszt/typecheck/build, a Compose config es a secret scan sikeres; a Docker image build helyi Docker daemon hianyaban nem futott le (`dockerDesktopLinuxEngine` pipe hianyzik).
+- Nyitott follow-up: Commit/push; Docker image build ellenorzese Dockerrel futo gepen vagy NAS-on.

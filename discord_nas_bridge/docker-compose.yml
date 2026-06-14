@@ -1,0 +1,12 @@
+services:
+  codex-discord-bridge:
+    build:
+      context: ..
+      dockerfile: discord_nas_bridge/Dockerfile
+    image: codex-discord-bridge:local
+    container_name: codex-discord-bridge
+    restart: unless-stopped
+    env_file:
+      - .env.nas
+    volumes:
+      - ./data:/data

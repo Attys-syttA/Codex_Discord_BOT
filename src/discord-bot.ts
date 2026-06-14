@@ -2,7 +2,9 @@ import {
   ChannelType,
   ChatInputCommandInteraction,
   Client,
+  Events,
   GatewayIntentBits,
+  MessageFlags,
   Partials,
   REST,
   Routes,
@@ -30,7 +32,7 @@ export function createDiscordClient(
     partials: [Partials.Channel],
   });
 
-  client.once("ready", (readyClient) => {
+  client.once(Events.ClientReady, (readyClient) => {
     console.log(`Discord bridge logged in as ${readyClient.user.tag}`);
   });
 
@@ -53,12 +55,15 @@ async function handleChatInputInteraction(
   const guildId = interaction.guildId;
   const channel = interaction.channel;
   if (!guildId || !channel) {
-    await interaction.reply({ content: "This command must be used inside a configured Discord server.", ephemeral: true });
+    await interaction.reply({
+      content: "This command must be used inside a configured Discord server.",
+      flags: MessageFlags.Ephemeral,
+    });
     return;
   }
 
   try {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const parentId = "parentId" in channel ? channel.parentId : undefined;
     const response = await handleBridgeCommand(
@@ -83,7 +88,7 @@ async function handleChatInputInteraction(
       return;
     }
 
-    await interaction.reply({ content, ephemeral: true });
+    await interaction.reply({ content, flags: MessageFlags.Ephemeral });
   }
 }
 
