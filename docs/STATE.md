@@ -4,8 +4,8 @@
 
 - Date: 2026-06-14
 - Repository: `Codex_Discord_BOT`
-- Phase: Discord command skeleton
-- Runtime code: Gateway client and guild slash command skeleton available, gated by env flags
+- Phase: Worker-backed command skeleton
+- Runtime code: Gateway client and guild slash command skeleton available, with worker-backed `/new`, `/attach`, `/session`, and `/abort`
 - Primary direction: separate Discord pilot, not a Telegram rewrite
 
 ## Current goal
@@ -40,13 +40,19 @@ The planned model is:
 - In-memory session registry and testable command handler core added for mapped forum channel/thread contexts.
 - Config-only command behavior is implemented for `/doctor`, `/session`, `/workers`, `/new`, `/attach`, `/handoff`, and `/abort` placeholders.
 - Validation passed after this slice: `npm test` (27 tests), `npm run typecheck`, `npm run build`, and `ggshield secret scan path --recursive --yes --use-gitignore .`.
+- Worker-backed command behavior added:
+  - `/new` creates a worker session and starts a new Codex thread for the mapped workspace.
+  - `/attach` creates or reuses a worker session and resumes the requested Codex thread.
+  - `/session` refreshes live worker session info when a worker session is known.
+  - `/abort` calls the worker abort endpoint for the recorded worker session.
+- Validation passed after this slice: `npm test` (29 tests), `npm run typecheck`, `npm run build`, and `ggshield secret scan path --recursive --yes --use-gitignore .`.
 
 ## Next steps
 
 1. Create local `.env` from `.env.example` outside Git and add the real Discord token.
 2. Register guild-scoped slash commands against `Private Discord Server`.
-3. Run a private Discord smoke test for `/doctor`, `/session`, `/workers`, `/new`, `/attach`, and `/handoff`.
-4. Wire `/new`, `/session`, `/abort`, and later prompt streaming to real worker sessions.
+3. Run a private Discord smoke test for `/doctor`, `/session`, `/workers`, `/new`, `/attach`, `/handoff`, and `/abort`.
+4. Add prompt submission and streamed Discord response delivery.
 5. Add private Discord smoke checklist before treating live behavior as done.
 
 ## Operational notes

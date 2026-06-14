@@ -26,8 +26,13 @@ export interface BridgeCommandResponse {
 export interface BridgeCommandDeps {
   config: DiscordBridgeConfig;
   sessions: SessionRegistry;
-  createWorkerClient?: (worker: WorkerTarget) => Pick<WorkerClient, "getHealth" | "abort">;
+  createWorkerClient?: (worker: WorkerTarget) => BridgeWorkerClient;
 }
+
+export type BridgeWorkerClient = Pick<
+  WorkerClient,
+  "getHealth" | "createSession" | "getSessionInfo" | "newThread" | "resumeThread" | "abort"
+>;
 
 interface ResolvedContext {
   contextKey: DiscordContextKey;
@@ -57,13 +62,13 @@ export async function handleBridgeCommand(
     case "doctor":
       return response(await renderDoctor(input, deps, resolved));
     case "session":
-      return response(renderSession(deps.sessions.get(resolved.contextKey), resolved));
+      return response(await renderSession(deps, resolved));
     case "workers":
       return response(renderWorkers(deps.config, resolved.worker.id));
     case "new":
-      return response(renderNewSession(deps.sessions.upsert(createBaseSession(input, resolved))));
+      return response(await renderNewSession(input, deps, resolved));
     case "attach":
-      return response(renderAttach(input, deps, resolved));
+      return response(await renderAttach(input, deps, resolved));
     case "handoff":
       return response(renderHandoff(deps.sessions.get(resolved.contextKey), resolved));
     case "abort":
@@ -135,7 +140,8 @@ async function renderDoctor(
   ].join("\n");
 }
 
-function renderSession(metadata: SessionMetadata | undefined, resolved: ResolvedContext): string {
+async function renderSession(deps: BridgeCommandDeps, resolved: ResolvedContext): Promise<string> {
+  const metadata = deps.sessions.get(resolved.contextKey);
   if (!metadata) {
     return [
       "No active session for this Discord context yet.",
@@ -145,14 +151,17 @@ function renderSession(metadata: SessionMetadata | undefined, resolved: Resolved
     ].join("\n");
   }
 
+  const live = await refreshSessionInfo(deps, resolved, metadata);
+
   return [
     "Current session",
     `Context: ${metadata.contextKey}`,
-    `Workspace: ${metadata.workspace}`,
+    `Workspace: ${live.metadata.workspace}`,
     `Worker: ${metadata.workerId}`,
-    `Worker session ID: ${metadata.workerSessionId ?? "(not created yet)"}`,
-    `Codex thread ID: ${metadata.codexThreadId ?? "(not attached yet)"}`,
-    `Updated: ${metadata.updatedAt}`,
+    `Worker session ID: ${live.metadata.workerSessionId ?? "(not created yet)"}`,
+    `Codex thread ID: ${live.metadata.codexThreadId ?? "(not attached yet)"}`,
+    `Worker status: ${live.status}`,
+    `Updated: ${live.metadata.updatedAt}`,
   ].join("\n");
 }
 
@@ -175,33 +184,56 @@ function createBaseSession(input: BridgeCommandInput, resolved: ResolvedContext)
   };
 }
 
-function renderNewSession(metadata: SessionMetadata): string {
-  return [
-    "Session placeholder created.",
-    `Context: ${metadata.contextKey}`,
-    `Workspace: ${metadata.workspace}`,
-    `Worker: ${metadata.workerId}`,
-    "Worker session creation will be wired in the next integration slice.",
-  ].join("\n");
-}
-
-function renderAttach(
+async function renderNewSession(
   input: BridgeCommandInput,
   deps: BridgeCommandDeps,
   resolved: ResolvedContext,
-): string {
+): Promise<string> {
+  const client = createClient(deps, resolved.worker);
+  const created = await client.createSession({ workspace: resolved.mapping.workspace });
+  const info = await client.newThread(created.sessionId, { workspace: resolved.mapping.workspace });
+  const metadata = deps.sessions.upsert({
+    ...createBaseSession(input, resolved),
+    workerSessionId: created.sessionId,
+    ...(info.threadId ? { codexThreadId: info.threadId } : {}),
+    workspace: info.workspace || resolved.mapping.workspace,
+  });
+
+  return [
+    "Worker session created.",
+    `Context: ${metadata.contextKey}`,
+    `Workspace: ${metadata.workspace}`,
+    `Worker: ${metadata.workerId}`,
+    `Worker session ID: ${metadata.workerSessionId}`,
+    `Codex thread ID: ${metadata.codexThreadId ?? "(worker did not return one yet)"}`,
+  ].join("\n");
+}
+
+async function renderAttach(
+  input: BridgeCommandInput,
+  deps: BridgeCommandDeps,
+  resolved: ResolvedContext,
+): Promise<string> {
   const threadId = input.options?.thread_id?.trim();
   if (!threadId) {
     return "Missing required option: thread_id";
   }
 
-  if (!deps.sessions.get(resolved.contextKey)) {
-    deps.sessions.upsert(createBaseSession(input, resolved));
-  }
-  const metadata = deps.sessions.attachThread(resolved.contextKey, threadId);
+  const current = deps.sessions.get(resolved.contextKey);
+  const client = createClient(deps, resolved.worker);
+  const workerSessionId = current?.workerSessionId ?? (await client.createSession({ workspace: resolved.mapping.workspace })).sessionId;
+  const info = await client.resumeThread(workerSessionId, threadId);
+  const metadata = deps.sessions.upsert({
+    ...createBaseSession(input, resolved),
+    workerSessionId,
+    codexThreadId: info.threadId ?? threadId,
+    workspace: info.workspace || resolved.mapping.workspace,
+  });
+
   return [
-    "Codex thread attached.",
+    "Codex thread attached through worker.",
     `Context: ${metadata.contextKey}`,
+    `Worker session ID: ${metadata.workerSessionId}`,
     `Codex thread ID: ${metadata.codexThreadId}`,
   ].join("\n");
 }
@@ -230,14 +262,43 @@ async function renderAbort(deps: BridgeCommandDeps, resolved: ResolvedContext): 
     return "No active worker session is recorded for this context yet.";
   }
 
-  const client = deps.createWorkerClient?.(resolved.worker) ?? new WorkerClient({
-    worker: resolved.worker,
-    timeoutMs: deps.config.workerTimeoutMs,
-  });
+  const client = createClient(deps, resolved.worker);
   await client.abort(metadata.workerSessionId);
   return `Abort requested for worker session ${metadata.workerSessionId}.`;
 }
 
 function response(content: string): BridgeCommandResponse {
   return { content, ephemeral: true };
+}
+
+async function refreshSessionInfo(
+  deps: BridgeCommandDeps,
+  resolved: ResolvedContext,
+  metadata: SessionMetadata,
+): Promise<{ metadata: SessionMetadata; status: string }> {
+  if (!metadata.workerSessionId) {
+    return { metadata, status: "not created yet" };
+  }
+
+  try {
+    const info = await createClient(deps, resolved.worker).getSessionInfo(metadata.workerSessionId);
+    const next = deps.sessions.upsert({
+      ...metadata,
+      workspace: info.workspace || metadata.workspace,
+      ...(info.threadId ? { codexThreadId: info.threadId } : {}),
+    });
+    return { metadata: next, status: "reachable" };
+  } catch (error) {
+    return {
+      metadata,
+      status: `error: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+}
+
+function createClient(deps: BridgeCommandDeps, worker: WorkerTarget): BridgeWorkerClient {
+  return deps.createWorkerClient?.(worker) ?? new WorkerClient({
+    worker,
+    timeoutMs: deps.config.workerTimeoutMs,
+  });
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { loadConfig } from "../src/config.js";
-import { handleBridgeCommand, type BridgeCommandInput } from "../src/command-handlers.js";
+import { handleBridgeCommand, type BridgeCommandInput, type BridgeWorkerClient } from "../src/command-handlers.js";
 import { SessionRegistry } from "../src/session-registry.js";
 
 const env = {
@@ -38,6 +38,30 @@ const baseInput: BridgeCommandInput = {
 };
 
 describe("handleBridgeCommand", () => {
+  function createMockWorker(overrides: Partial<BridgeWorkerClient> = {}): BridgeWorkerClient {
+    return {
+      getHealth: async () => ({ mode: "remote-worker" }),
+      createSession: async () => ({
+        sessionId: "worker-session-1",
+        info: { threadId: null, workspace: "E:\\codex_works\\Codex_Discord_BOT" },
+      }),
+      getSessionInfo: async () => ({
+        threadId: "codex-thread-live",
+        workspace: "E:\\codex_works\\Codex_Discord_BOT",
+      }),
+      newThread: async () => ({
+        threadId: "codex-thread-new",
+        workspace: "E:\\codex_works\\Codex_Discord_BOT",
+      }),
+      resumeThread: async (_sessionId: string, threadId: string) => ({
+        threadId,
+        workspace: "E:\\codex_works\\Codex_Discord_BOT",
+      }),
+      abort: async () => undefined,
+      ...overrides,
+    };
+  }
+
   it("renders /session for an empty mapped thread context", async () => {
     const response = await handleBridgeCommand(baseInput, {
       config: loadConfig(env),
@@ -71,14 +95,33 @@ describe("handleBridgeCommand", () => {
     expect(response.content).toContain("No active session");
   });
 
-  it("creates a session placeholder with /new", async () => {
+  it("creates a worker session and Codex thread with /new", async () => {
     const sessions = new SessionRegistry();
+    const calls: string[] = [];
     const response = await handleBridgeCommand({ ...baseInput, commandName: "new" }, {
       config: loadConfig(env),
       sessions,
+      createWorkerClient: () => createMockWorker({
+        createSession: async () => {
+          calls.push("createSession");
+          return {
+            sessionId: "worker-session-1",
+            info: { threadId: null, workspace: "E:\\codex_works\\Codex_Discord_BOT" },
+          };
+        },
+        newThread: async () => {
+          calls.push("newThread");
+          return {
+            threadId: "codex-thread-new",
+            workspace: "E:\\codex_works\\Codex_Discord_BOT",
+          };
+        },
+      }),
     });
 
-    expect(response.content).toContain("Session placeholder created.");
+    expect(calls).toEqual(["createSession", "newThread"]);
+    expect(response.content).toContain("Worker session created.");
+    expect(response.content).toContain("codex-thread-new");
     expect(sessions.list()).toHaveLength(1);
   });
 
@@ -90,21 +133,66 @@ describe("handleBridgeCommand", () => {
       ...baseInput,
       commandName: "attach",
       options: { thread_id: "codex-thread-1" },
-    }, { config, sessions });
+    }, { config, sessions, createWorkerClient: () => createMockWorker() });
 
     const response = await handleBridgeCommand({ ...baseInput, commandName: "handoff" }, { config, sessions });
 
     expect(response.content).toContain("codex resume codex-thread-1");
   });
 
+  it("refreshes live worker session info in /session", async () => {
+    const sessions = new SessionRegistry();
+    const config = loadConfig(env);
+    await handleBridgeCommand({ ...baseInput, commandName: "new" }, {
+      config,
+      sessions,
+      createWorkerClient: () => createMockWorker(),
+    });
+
+    const response = await handleBridgeCommand({ ...baseInput, commandName: "session" }, {
+      config,
+      sessions,
+      createWorkerClient: () => createMockWorker({
+        getSessionInfo: async () => ({
+          threadId: "codex-thread-refreshed",
+          workspace: "E:\\codex_works\\Codex_Discord_BOT",
+        }),
+      }),
+    });
+
+    expect(response.content).toContain("Worker status: reachable");
+    expect(response.content).toContain("codex-thread-refreshed");
+  });
+
+  it("calls worker abort for a recorded worker session", async () => {
+    const sessions = new SessionRegistry();
+    const config = loadConfig(env);
+    await handleBridgeCommand({ ...baseInput, commandName: "new" }, {
+      config,
+      sessions,
+      createWorkerClient: () => createMockWorker(),
+    });
+
+    const calls: string[] = [];
+    const response = await handleBridgeCommand({ ...baseInput, commandName: "abort" }, {
+      config,
+      sessions,
+      createWorkerClient: () => createMockWorker({
+        abort: async (sessionId: string) => {
+          calls.push(sessionId);
+        },
+      }),
+    });
+
+    expect(calls).toEqual(["worker-session-1"]);
+    expect(response.content).toContain("Abort requested");
+  });
+
   it("renders /doctor with worker health from the injectable client", async () => {
     const response = await handleBridgeCommand({ ...baseInput, commandName: "doctor" }, {
       config: loadConfig(env),
       sessions: new SessionRegistry(),
-      createWorkerClient: () => ({
-        getHealth: async () => ({ mode: "remote-worker" }),
-        abort: async () => undefined,
-      }),
+      createWorkerClient: () => createMockWorker(),
     });
 
     expect(response.content).toContain("Worker health: remote-worker");

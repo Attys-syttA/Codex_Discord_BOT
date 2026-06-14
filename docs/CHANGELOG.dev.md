@@ -49,3 +49,11 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git status --short --branch`.
 - Eredmeny: Letrejott a guild-scoped slash command definicio es a Discord Gateway client adapter. A parancsok egyelore config/session placeholder core-on futnak: `/doctor`, `/session`, `/workers`, `/new`, `/attach`, `/handoff`, `/abort`. A suite 27 zold tesztet futtat, a typecheck es build sikeres, `ggshield` nem talalt secretet.
 - Nyitott follow-up: Localis `.env` feltoltese valodi tokennel, `DISCORD_REGISTER_COMMANDS=true` parancsregisztracio, majd privat Discord smoke; utana valos worker session wire.
+
+## 2026-06-14 13:05 +02:00
+
+- Cel: A command core osszekotese a valos AttysCodexBridge-kompatibilis worker API-val.
+- Modositott fajlok: `src/command-handlers.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git status --short --branch`.
+- Eredmeny: A `/new` mar worker sessiont hoz letre es uj Codex threadet indit; az `/attach` worker sessionon keresztul resume-olja a megadott threadet; a `/session` ismert worker sessionnel elo infot frissit; az `/abort` a worker abort endpointot hivja. A suite 29 zold tesztet futtat, typecheck/build sikeres, `ggshield` nem talalt secretet.
+- Nyitott follow-up: Valodi `.env` + guild command registration + privat Discord smoke, majd prompt submission es streamed Discord valaszok.
