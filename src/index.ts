@@ -11,6 +11,7 @@ console.log("Codex Discord bridge skeleton loaded", {
   guildId: config.guildId,
   allowedUsers: config.allowedUserIds.length,
   projectChannels: config.channelMappings.length,
+  autoWorkspaceRoot: config.autoWorkspaceRoot ?? "(disabled)",
   workers: config.workers.map((worker) => ({ id: worker.id, label: worker.label, baseUrl: worker.baseUrl })),
   defaultWorkerId: config.defaultWorkerId,
   sessionStorePath: config.sessionStorePath,

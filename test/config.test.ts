@@ -38,6 +38,7 @@ describe("loadConfig", () => {
       channelId: "100000000000000101",
       workerId: "otthon",
     });
+    expect(config.autoWorkspaceRoot).toBeUndefined();
     expect(config.workers[0]).toMatchObject({
       id: "otthon",
       label: "Otthon worker",
@@ -53,6 +54,15 @@ describe("loadConfig", () => {
     });
 
     expect(config.sessionStorePath).toBe("runtime/sessions.json");
+  });
+
+  it("accepts an optional auto workspace root", () => {
+    const config = loadConfig({
+      ...baseEnv,
+      DISCORD_AUTO_WORKSPACE_ROOT: "E:\\codex_works",
+    });
+
+    expect(config.autoWorkspaceRoot).toBe("E:\\codex_works");
   });
 
   it("accepts optional role allowlists", () => {

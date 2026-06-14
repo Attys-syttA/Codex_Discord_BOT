@@ -11,7 +11,9 @@ export interface BridgeCommandInput {
   commandName: string;
   guildId: string;
   channelId: string;
+  channelName?: string;
   parentId?: string | null;
+  parentName?: string;
   isThread: boolean;
   userId: string;
   memberRoleIds: string[];
@@ -94,7 +96,11 @@ function resolveContext(input: BridgeCommandInput, config: DiscordBridgeConfig):
     ...(input.parentId === undefined ? {} : { parentId: input.parentId }),
     isThread: input.isThread,
   });
-  const mapping = config.channelMappingById.get(projectChannelId);
+  const mapping = config.channelMappingById.get(projectChannelId) ?? resolveAutoWorkspaceMapping(
+    input,
+    config,
+    projectChannelId,
+  );
   if (!mapping) {
     return undefined;
   }
@@ -111,6 +117,33 @@ function resolveContext(input: BridgeCommandInput, config: DiscordBridgeConfig):
   );
 
   return { contextKey, projectChannelId, mapping, worker };
+}
+
+function resolveAutoWorkspaceMapping(
+  input: BridgeCommandInput,
+  config: DiscordBridgeConfig,
+  projectChannelId: string,
+): DiscordChannelMapping | undefined {
+  if (!config.autoWorkspaceRoot) {
+    return undefined;
+  }
+
+  const projectName = (input.isThread ? input.parentName : input.channelName)?.trim();
+  if (!projectName) {
+    return undefined;
+  }
+
+  return {
+    channelId: projectChannelId,
+    workspace: joinWorkspacePath(config.autoWorkspaceRoot, projectName),
+    workerId: config.defaultWorkerId,
+  };
+}
+
+function joinWorkspacePath(root: string, projectName: string): string {
+  const normalizedRoot = root.replace(/[\\/]+$/, "");
+  const separator = /^[A-Za-z]:[\\/]/.test(normalizedRoot) || normalizedRoot.includes("\\") ? "\\" : "/";
+  return `${normalizedRoot}${separator}${projectName}`;
 }
 
 async function renderDoctor(

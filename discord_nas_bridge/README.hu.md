@@ -39,6 +39,14 @@ Ez a mappa a NAS-on futtatandó Discord bridge csomag helye.
    DISCORD_WORKERS_JSON=[{"id":"otthon","label":"Otthon worker","baseUrl":"http://worker-home.example:8787","sharedSecret":"..."}]
    ```
 
+   Ha új Discord fórumokat szeretnél automatikusan repohoz kötni, állítsd be a worker gép workspace rootját:
+
+   ```env
+   DISCORD_AUTO_WORKSPACE_ROOT=E:\codex_works
+   ```
+
+   Ilyenkor egy nem kézzel mapelt fórum neve lesz a repo/projekt mappanév. Például a `codex_discord_bot` fórum a worker felé `<CODEX_WORKS_HOME>\codex_discord_bot` workspace-ként megy tovább. A kézi `DISCORD_CHANNEL_MAPPINGS_JSON` bejegyzések mindig elsőbbséget élveznek.
+
 6. Indítás a NAS-on, a feltöltött mappából:
 
    ```sh

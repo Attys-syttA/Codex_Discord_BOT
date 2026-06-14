@@ -153,3 +153,59 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: friss NAS log export atnezese; `git status --short --branch`; `npm run check:workspace`; `docker run --rm ... codex-discord-bridge:nas-bundle` fake env-vel es `DISCORD_LOGIN=false` mellett.
 - Eredmeny: A friss NAS log szerint a kontener `Cannot find module '/app/dist/index.js'` hibaval allt le. A TypeScript build `rootDir: "."` miatt `dist/src/index.js` ala fordit, ezert a production `start` script es a Docker `CMD` is erre az entrypointra lett allitva. A teljes workspace check sikeres volt, majd a production Docker image fake env-vel, Discord login nelkul sikeresen betoltotte a konfiguraciot es 0 exit code-dal kilepett.
 - Nyitott follow-up: Commit/push, friss NAS bundle feltoltes es kontener ujraepites.
+
+## 2026-06-14 17:23 +02:00
+
+- Cel: NAS oldali Discord bridge indulas rogzites es a helyi dev bot leallitasa.
+- Modositott fajlok: `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `git status --short --branch`; futtatott `Codex_Discord_BOT` folyamatok ellenorzese; NAS log export atnezese; helyi dev bot process tree leallitasa.
+- Eredmeny: A NAS log szerint a kontener hiba nelkul bejelentkezett: `Discord bridge logged in as TEST_ONLY_DISCORD_BOT#0000`. A NAS bridge `/data/sessions.json` session store-t es az `otthon` workert hasznalja `http://worker-host.example:8787` cimmel. A korabbi helyi `npm run dev` Discord bot peldany le lett allitva, hogy ne fusson ket bot ugyanazzal a tokennel.
+- Nyitott follow-up: Privat Discord smoke a NAS-hosted bot ellen: `/doctor`, `/session`, `/new`, `/ask`.
+
+## 2026-06-14 17:35 +02:00
+
+- Cel: NAS-hosted slash command timeout diagnosztika hozzaadasa.
+- Modositott fajlok: `src/discord-bot.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`; generalt, nem commitolt deploy bundle: `discord_nas_bridge/app/`.
+- Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `npm run nas:bundle:prepare`.
+- Eredmeny: Az elso NAS-hosted `/doctor` Discordon `Az alkalmazas nem valaszolt` hibaval timeoutolt. A bridge most nem titkos interaction diagnosztikat logol: command received, deferred/ACK, completed vagy failed. A teszt/typecheck/build zold, es a NAS bundle frissult.
+- Nyitott follow-up: Friss `discord_nas_bridge/` feltoltes NAS-ra, kontener rebuild/restart, majd uj `/doctor` proba es NAS log ellenorzes.
+
+## 2026-06-14 17:42 +02:00
+
+- Cel: Regi NAS log `Unknown interaction` hiba ertelmezese es crash-vedelem.
+- Modositott fajlok: `src/discord-bot.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`; generalt, nem commitolt deploy bundle: `discord_nas_bridge/app/`.
+- Futtatott parancsok: regi `codex-discord-bridge.csv` log atnezese; `npm test`; `npm run typecheck`; `npm run build`; `npm run nas:bundle:prepare`; `git diff --check`.
+- Eredmeny: A regi logban a lenyegi hiba `DiscordAPIError[10062]: Unknown interaction`; a `tts: false` payload sor nem TTS jogosultsagi problema. A hibavalasz kuldes most vedett, igy lejart interaction token eseten a bridge logol, de nem dob kezeletlen klienshibat. A teszt/typecheck/build zold, a NAS bundle frissult.
+- Nyitott follow-up: Friss bundle feltoltes utan uj `/doctor`; a NAS logban keresendo sorok: `Discord command received`, `Discord command deferred`, `Discord command completed` vagy `Discord interaction reply/editReply failed`.
+
+## 2026-06-14 18:01 +02:00
+
+- Cel: NAS Discord REST callback keses csokkentese.
+- Modositott fajlok: `discord_nas_bridge/Dockerfile`, `discord_nas_bridge/docker-compose.yml`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`; generalt, nem commitolt deploy bundle: `discord_nas_bridge/app/`.
+- Futtatott parancsok: friss `codex-discord-bridge.csv` log atnezese; `npm test`; `npm run typecheck`; `npm run build`; `npm run nas:bundle:prepare`; `docker build -f discord_nas_bridge\Dockerfile -t codex-discord-bridge:nas-bundle discord_nas_bridge`.
+- Eredmeny: A friss log szerint a Gateway interaction event beerkezett, de a `deferReply` csak kb. 4 masodperccel kesobb ert Discordhoz, ezert `DiscordAPIError[10062]: Unknown interaction` lett. A NAS runtime most `NODE_OPTIONS=--dns-result-order=ipv4first` beallitast kap Dockerfile es compose szinten is, hogy elkerulje a lassu IPv6/DNS fallbacket. A teszt/typecheck/build es a helyi NAS Docker build zold.
+- Nyitott follow-up: Friss NAS feltoltes es teljes rebuild/restart utan uj `/doctor`; siker eseten folytatni `/session`, `/new`, `/ask` smoke-kal.
+
+## 2026-06-14 18:15 +02:00
+
+- Cel: NAS bind mount session-store jogosultsagi hiba javitasa.
+- Modositott fajlok: `discord_nas_bridge/Dockerfile`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`; generalt, nem commitolt deploy bundle: `discord_nas_bridge/app/`.
+- Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `npm run nas:bundle:prepare`; `docker build -f discord_nas_bridge\Dockerfile -t codex-discord-bridge:nas-bundle discord_nas_bridge`.
+- Eredmeny: Az IPv4-first javitas utan a NAS-hosted `/doctor` es `/session` mar valaszolt, a `/new` pedig `EACCES: permission denied, open '/data/sessions.json'` hibanal akadt el. A Docker runtime mar nem valt a nem-root `node` userre, hogy a Synology `./data:/data` bind mount sajat session state fajljat irni tudja. A teszt/typecheck/build es a helyi NAS Docker build zold.
+- Nyitott follow-up: Friss NAS feltoltes es teljes rebuild/restart utan uj `/new`, majd `/session` es `/ask` smoke.
+
+## 2026-06-14 18:38 +02:00
+
+- Cel: Uj Discord forumok automatikus repo/workspace mappingje.
+- Modositott fajlok: `.env.example`, `discord_nas_bridge/.env.nas.example`, `discord_nas_bridge/README.hu.md`, `src/config.ts`, `src/discord-bot.ts`, `src/command-handlers.ts`, `src/index.ts`, `test/config.test.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`; ignored helyi env frissites: `.env`, `discord_nas_bridge/.env.nas`; generalt, nem commitolt deploy bundle: `discord_nas_bridge/app/`.
+- Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `npm run nas:bundle:prepare`; `docker build -f discord_nas_bridge\Dockerfile -t codex-discord-bridge:nas-bundle discord_nas_bridge`.
+- Eredmeny: Bekerult a `DISCORD_AUTO_WORKSPACE_ROOT` fallback. Ha egy forum/csatorna nincs explicit `DISCORD_CHANNEL_MAPPINGS_JSON` alatt, a bridge a forum/csatorna nevebol es az auto rootbol allit elo workspace-et; forum threadnel a parent forum nevet hasznalja, nem a bejegyzes cimet. Az explicit channel mapping tovabbra is elsobbseget elvez. A teszt/typecheck/build es a helyi NAS Docker build zold.
+- Nyitott follow-up: Friss NAS feltoltes utan `DISCORD_AUTO_WORKSPACE_ROOT=E:\codex_works` ellenorzese a real `.env.nas` fajlban, majd unmapped forum `/doctor` smoke.
+
+## 2026-06-14 18:55 +02:00
+
+- Cel: A terv szerinti kovetkezo fejlesztesi sorrend rogzites es a friss NAS smoke allapot beirasa.
+- Modositott fajlok: `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `git status --short --branch`; `rg` a terv/state/changelog aktualis nyitott pontjaira; terv es state atnezese; `git diff --check`; `npm run check:workspace`; `ggshield secret scan path --recursive --yes --use-gitignore .`.
+- Eredmeny: A friss NAS smoke szerint az unmapped `codex_discord_bot` forum thread `/doctor` parancsa mar automatikusan `<CODEX_WORKS_HOME>\codex_discord_bot` workspace-re mapel, a NAS-hosted bot valaszol, es a worker health `remote-worker`. A fejlesztesi dontes: eloszor stabilizacios checkpoint ellenorzes/commit/push, utana hosszu `/ask` valaszok Discord message editing/chunking kezelese. Plain message promptok, Message Content Intent, automatikus forumletrehozas, Wake-on-LAN es multi-worker UX kesobbre halasztva.
+- Nyitott follow-up: Commit/push; ezutan `/ask` chunking/editing implementacio.

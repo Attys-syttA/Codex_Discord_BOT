@@ -4,7 +4,7 @@
 
 - Date: 2026-06-14
 - Repository: `Codex_Discord_BOT`
-- Phase: Discord `/ask` live smoke passed; NAS container entrypoint fix in progress
+- Phase: NAS Discord bridge container and auto forum workspace mapping smoke passed; stabilization checkpoint in progress
 - Runtime code: Gateway client and guild slash command skeleton available, with worker-backed `/new`, `/attach`, `/session`, `/abort`, and `/ask`; runtime session mappings can persist to `.discord-bot-state/sessions.json`
 - Primary direction: separate Discord pilot, not a Telegram rewrite
 
@@ -102,15 +102,53 @@ The planned model is:
 - NAS Docker runtime was adjusted to start with `node dist/index.js` directly and make `/app` readable before switching to `USER node`.
 - Fresh NAS log then showed `MODULE_NOT_FOUND: Cannot find module '/app/dist/index.js'`.
 - The TypeScript build emits `dist/src/index.js` because `tsconfig.json` uses `rootDir: "."`; `package.json` and the NAS Docker `CMD` now use `node dist/src/index.js`.
+- NAS container startup succeeded after the entrypoint fixes:
+  - Exported NAS log shows `Discord bridge logged in as TEST_ONLY_DISCORD_BOT#0000`.
+  - NAS runtime session store is `/data/sessions.json`.
+  - NAS bridge is configured to use worker `otthon` at `http://worker-host.example:8787`.
+- The previous local Discord dev bot process was stopped so the NAS container is the only active Discord bot instance.
+- First NAS-hosted `/doctor` attempt timed out in Discord with `Az alkalmazás nem válaszolt`.
+- The pre-diagnostics NAS log shows the real Discord API error was `DiscordAPIError[10062]: Unknown interaction`.
+  - The `tts: false` line in the payload is not a TTS permission problem.
+  - It indicates a normal non-TTS interaction response body.
+- Fresh NAS diagnostics showed the interaction event was received, but `deferReply` reached Discord too late:
+  - `Discord command received` at `17:57:43`.
+  - `DiscordAPIError[10062]: Unknown interaction` during `deferReply` at `17:57:47`.
+  - This points to slow NAS/container outbound REST callback, not missing Discord command permissions.
+- Added minimal non-secret Discord interaction diagnostics:
+  - logs when a slash command is received,
+  - logs when the command is deferred/ACKed,
+  - logs completion or failure with command/guild/channel/user identifiers.
+- Interaction failure replies are now guarded so an expired interaction token is logged instead of surfacing as an unhandled client error.
+- NAS runtime now sets `NODE_OPTIONS=--dns-result-order=ipv4first` in both the Dockerfile and compose file to avoid slow IPv6/DNS fallback before Discord REST callbacks.
+- After the IPv4-first fix, `/doctor` and `/session` answered from the NAS-hosted bot, and `/new` reached the session store step.
+- `/new` then failed with `EACCES: permission denied, open '/data/sessions.json'`.
+  - This is a Synology bind-mount ownership issue for `./data:/data`.
+  - The NAS runtime no longer switches to the non-root `node` user, so it can write its own `/data` state volume.
+- Forum/channel auto workspace mapping was added:
+  - explicit `DISCORD_CHANNEL_MAPPINGS_JSON` entries still win,
+  - otherwise `DISCORD_AUTO_WORKSPACE_ROOT` plus the project forum/channel name is used,
+  - for a forum post/thread, the parent forum name is used instead of the individual post title.
+- The NAS deploy bundle under `discord_nas_bridge/app/` was regenerated after the diagnostics change.
+- Fresh NAS deployment smoke confirmed the auto workspace mapping:
+  - an unmapped forum thread under `codex_discord_bot` mapped to `<CODEX_WORKS_HOME>\codex_discord_bot`,
+  - `/doctor` answered from the NAS-hosted bot,
+  - worker health reported `remote-worker` through `http://worker-host.example:8787`.
+- Stabilization verification passed after the auto mapping smoke:
+  - `npm run check:workspace` passed,
+  - `ggshield secret scan path --recursive --yes --use-gitignore .` found no secrets.
+- Development order decision:
+  - first close the current NAS/Discord stabilization checkpoint with verification, commit, and push,
+  - next implement incremental Discord message editing/chunking for longer `/ask` responses,
+  - then add a private Discord smoke checklist and session-store write hardening.
+  - Defer plain message prompts, Message Content Intent, automatic forum creation, Wake-on-LAN, and multi-worker UX until after the checkpoint.
 
 ## Next steps
 
-1. Validate and push the NAS container entrypoint fix.
-2. Upload the refreshed `discord_nas_bridge/` folder to the NAS including the generated `app/` subfolder, then run `docker compose up -d --build` from that NAS folder.
-3. Keep NAS `DISCORD_WORKERS_JSON` pointed at `http://worker-host.example:8787` while the worker runs on the home PC.
-4. Add incremental Discord message editing/chunking for long streamed `/ask` responses.
-5. Add file-locking or atomic write hardening for the session store if multiple bot processes are ever allowed.
-6. Add private Discord smoke checklist before treating live behavior as done.
+1. Commit and push the stabilization checkpoint.
+2. Implement incremental Discord message editing/chunking for long `/ask` responses.
+3. Add a private Discord smoke checklist covering `/doctor`, `/new`, `/session`, `/ask`, `/abort`, and unmapped forum auto mapping.
+4. Add file-locking or atomic write hardening for the session store if multiple bot processes are ever allowed.
 
 ## Operational notes
 

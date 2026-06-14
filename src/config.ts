@@ -23,6 +23,7 @@ export interface DiscordBridgeConfig {
   channelMappingById: Map<string, DiscordChannelMapping>;
   workers: WorkerTarget[];
   defaultWorkerId: string;
+  autoWorkspaceRoot?: string;
   workerTimeoutMs: number;
   sessionStorePath: string;
 }
@@ -36,6 +37,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): DiscordBridgeC
   const channelMappings = parseChannelMappings(requireEnv(env, "DISCORD_CHANNEL_MAPPINGS_JSON"));
   const workers = parseWorkers(requireEnv(env, "DISCORD_WORKERS_JSON"));
   const defaultWorkerId = parseDefaultWorkerId(optionalEnv(env, "DISCORD_DEFAULT_WORKER_ID"), workers);
+  const autoWorkspaceRoot = optionalEnv(env, "DISCORD_AUTO_WORKSPACE_ROOT");
   const workerTimeoutMs = parsePositiveInteger(
     optionalEnv(env, "DISCORD_WORKER_TIMEOUT_MS"),
     120_000,
@@ -62,6 +64,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): DiscordBridgeC
     channelMappingById: new Map(channelMappings.map((mapping) => [mapping.channelId, mapping])),
     workers,
     defaultWorkerId,
+    ...(autoWorkspaceRoot ? { autoWorkspaceRoot } : {}),
     workerTimeoutMs,
     sessionStorePath,
   };

@@ -74,6 +74,41 @@ describe("handleBridgeCommand", () => {
     expect(response.content).toContain("E:\\codex_works\\Codex_Discord_BOT");
   });
 
+  it("auto maps an unmapped forum thread by parent channel name", async () => {
+    const response = await handleBridgeCommand({
+      ...baseInput,
+      channelId: "1515659999999999999",
+      parentId: "1515658888888888888",
+      parentName: "codex_discord_bot",
+    }, {
+      config: loadConfig({
+        ...env,
+        DISCORD_CHANNEL_MAPPINGS_JSON: "[]",
+        DISCORD_AUTO_WORKSPACE_ROOT: "E:\\codex_works",
+      }),
+      sessions: new SessionRegistry(),
+    });
+
+    expect(response.content).toContain("No active session");
+    expect(response.content).toContain("Context: 100000000000000001:1515658888888888888:1515659999999999999");
+    expect(response.content).toContain("Workspace: E:\\codex_works\\codex_discord_bot");
+  });
+
+  it("prefers explicit channel mappings over auto workspace mapping", async () => {
+    const response = await handleBridgeCommand({
+      ...baseInput,
+      parentName: "different_project",
+    }, {
+      config: loadConfig({
+        ...env,
+        DISCORD_AUTO_WORKSPACE_ROOT: "E:\\codex_works",
+      }),
+      sessions: new SessionRegistry(),
+    });
+
+    expect(response.content).toContain("Workspace: E:\\codex_works\\Codex_Discord_BOT");
+  });
+
   it("blocks users outside the allowlist", async () => {
     const response = await handleBridgeCommand({ ...baseInput, userId: "1515658000000000000" }, {
       config: loadConfig(env),
