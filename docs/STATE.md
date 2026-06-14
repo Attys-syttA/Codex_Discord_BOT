@@ -4,7 +4,7 @@
 
 - Date: 2026-06-14
 - Repository: `Codex_Discord_BOT`
-- Phase: Discord smoke passed; NAS Docker bridge scaffold started
+- Phase: Discord `/ask` payload fix ready; token rotation required
 - Runtime code: Gateway client and guild slash command skeleton available, with worker-backed `/new`, `/attach`, `/session`, `/abort`, and `/ask`; runtime session mappings can persist to `.discord-bot-state/sessions.json`
 - Primary direction: separate Discord pilot, not a Telegram rewrite
 
@@ -70,15 +70,21 @@ The planned model is:
 - Docker image build was re-run after Docker Desktop startup and completed successfully:
   - `docker build -f discord_nas_bridge/Dockerfile -t codex-discord-bridge:local .`
 - Warning: `docker compose config` can print real env values, including tokens and shared secrets. Use it only with fake/example env values.
+- `/ask` live smoke found a payload mismatch:
+  - Worker expected `CodexPromptInput` as a string or `{ text: "..." }`.
+  - Discord bridge previously sent `{ prompt: "..." }`, so Codex CLI received empty stdin.
+  - The command handler now sends `{ text: prompt }`.
+- Validation passed after this slice: `npm test` (33 tests), `npm run typecheck`, and `npm run build`.
 
 ## Next steps
 
-1. Test `/ask` against the current local worker and decide whether the worker needs a richer Codex thread response contract.
-2. Run Docker image build on a machine where Docker daemon is available.
-3. Prepare NAS deployment handoff: copy `discord_nas_bridge/.env.nas.example` to `.env.nas` on NAS and replace `WORKER_PC_IP`.
-4. Add incremental Discord message editing/chunking for long streamed `/ask` responses.
-5. Add file-locking or atomic write hardening for the session store if multiple bot processes are ever allowed.
-6. Add private Discord smoke checklist before treating live behavior as done.
+1. Reset the Discord bot token in Developer Portal because `docker compose config` was run once against the real `.env.nas` and printed env values.
+2. Update both local `.env` and `discord_nas_bridge/.env.nas` with the new token.
+3. Restart the local Discord bot and retry `/ask`.
+4. Prepare NAS deployment handoff: copy `discord_nas_bridge/` files to NAS and keep `DISCORD_WORKERS_JSON` pointed at `http://worker-host.example:8787`.
+5. Add incremental Discord message editing/chunking for long streamed `/ask` responses.
+6. Add file-locking or atomic write hardening for the session store if multiple bot processes are ever allowed.
+7. Add private Discord smoke checklist before treating live behavior as done.
 
 ## Operational notes
 
@@ -91,6 +97,7 @@ The planned model is:
 - The real `.env` must stay local and ignored; `DISCORD_LOGIN` and `DISCORD_REGISTER_COMMANDS` default to `false`.
 - Runtime session state belongs under `.discord-bot-state/` by default and must not be committed.
 - NAS runtime files belong under `discord_nas_bridge/`; real `discord_nas_bridge/.env.nas` and `discord_nas_bridge/data/` runtime contents must not be committed.
+- Do not run `docker compose config` with a real `.env` or `.env.nas`; it can print secrets to the terminal/log.
 
 ## Discord pilot identifiers
 

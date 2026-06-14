@@ -236,9 +236,7 @@ describe("handleBridgeCommand", () => {
       {
         sessionId: "worker-session-1",
         input: {
-          prompt: "Folytasd a Discord bridge-et.",
-          workspace: "E:\\codex_works\\Codex_Discord_BOT",
-          threadId: "codex-thread-new",
+          text: "Folytasd a Discord bridge-et.",
         },
       },
     ]);

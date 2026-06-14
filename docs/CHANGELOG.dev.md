@@ -89,3 +89,11 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: `docker version`; `docker build -f discord_nas_bridge/Dockerfile -t codex-discord-bridge:local .`.
 - Eredmeny: Docker Desktop fut, a `codex-discord-bridge:local` image sikeresen felepult. A NAS `.env.nas` helyi, ignore-olt fajl mar `DISCORD_LOGIN=true`, `/data/sessions.json` session store es `WORKER_PC_IP` worker URL placeholder beallitasokat hasznal. Dokumentalva lett, hogy a `docker compose config` valos env mellett tokeneket es shared secretet irhat ki.
 - Nyitott follow-up: `ggshield` scan, `git diff --check`, commit/push; a NAS megosztott mappa jogosultsagainak veglegesitese es NAS oldali deploy.
+
+## 2026-06-14 15:02 +02:00
+
+- Cel: A Discord `/ask` elso elo hibajanak javitasa.
+- Modositott fajlok: `src/command-handlers.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `rg` a Telegram worker prompt contractra; `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git diff --check`.
+- Eredmeny: Az `/ask` hiba oka nem NAS hiany volt, hanem payload mismatch: a worker `CodexPromptInput` alakot var (`string` vagy `{ text }`), a Discord bridge pedig `{ prompt }` objektumot kuldott, ezert a Codex CLI ures stdint kapott. A bridge most `{ text: prompt }` payloadot kuld. A suite 33 zold tesztet futtat, typecheck/build sikeres, `ggshield` nem talalt secretet.
+- Nyitott follow-up: Discord bot token reset a korabbi valos `docker compose config` output miatt; uj token beirasa a helyi `.env` es `discord_nas_bridge/.env.nas` fajlokba; bot ujrainditas es `/ask` ujraproba.

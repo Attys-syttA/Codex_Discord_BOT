@@ -263,9 +263,7 @@ async function renderAsk(
     await createClient(deps, resolved.worker).prompt(
       metadata.workerSessionId,
       {
-        prompt,
-        workspace: metadata.workspace,
-        threadId: metadata.codexThreadId ?? null,
+        text: prompt,
       },
       {
         onTextDelta: (delta) => textParts.push(delta),
