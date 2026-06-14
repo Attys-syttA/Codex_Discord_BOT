@@ -41,3 +41,11 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: `git status --short --branch`; `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`.
 - Eredmeny: A skeleton tovabbra is zold: 18 Vitest teszt sikeres, typecheck es build sikeres, `ggshield` nem talalt secretet.
 - Nyitott follow-up: Commit es push utan Gateway/slash-command skeleton.
+
+## 2026-06-14 12:55 +02:00
+
+- Cel: Gateway/slash-command skeleton es tesztelheto Discord command core hozzaadasa nagyobb kovetkezo szeletkent.
+- Modositott fajlok: `.env.example`, `src/config.ts`, `src/index.ts`, `src/env.ts`, `src/session-registry.ts`, `src/command-definitions.ts`, `src/command-handlers.ts`, `src/discord-bot.ts`, `test/config.test.ts`, `test/env.test.ts`, `test/session-registry.test.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git status --short --branch`.
+- Eredmeny: Letrejott a guild-scoped slash command definicio es a Discord Gateway client adapter. A parancsok egyelore config/session placeholder core-on futnak: `/doctor`, `/session`, `/workers`, `/new`, `/attach`, `/handoff`, `/abort`. A suite 27 zold tesztet futtat, a typecheck es build sikeres, `ggshield` nem talalt secretet.
+- Nyitott follow-up: Localis `.env` feltoltese valodi tokennel, `DISCORD_REGISTER_COMMANDS=true` parancsregisztracio, majd privat Discord smoke; utana valos worker session wire.

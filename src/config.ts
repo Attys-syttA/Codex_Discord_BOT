@@ -17,6 +17,8 @@ export interface DiscordBridgeConfig {
   guildId: string;
   allowedUserIds: string[];
   allowedUserIdSet: Set<string>;
+  allowedRoleIds: string[];
+  allowedRoleIdSet: Set<string>;
   channelMappings: DiscordChannelMapping[];
   channelMappingById: Map<string, DiscordChannelMapping>;
   workers: WorkerTarget[];
@@ -29,6 +31,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): DiscordBridgeC
   const applicationId = parseSnowflake(requireEnv(env, "DISCORD_APPLICATION_ID"), "DISCORD_APPLICATION_ID");
   const guildId = parseSnowflake(requireEnv(env, "DISCORD_GUILD_ID"), "DISCORD_GUILD_ID");
   const allowedUserIds = parseAllowedSnowflakes(requireEnv(env, "DISCORD_ALLOWED_USER_IDS"), "DISCORD_ALLOWED_USER_IDS");
+  const allowedRoleIds = parseOptionalSnowflakes(optionalEnv(env, "DISCORD_ALLOWED_ROLE_IDS"), "DISCORD_ALLOWED_ROLE_IDS");
   const channelMappings = parseChannelMappings(requireEnv(env, "DISCORD_CHANNEL_MAPPINGS_JSON"));
   const workers = parseWorkers(requireEnv(env, "DISCORD_WORKERS_JSON"));
   const defaultWorkerId = parseDefaultWorkerId(optionalEnv(env, "DISCORD_DEFAULT_WORKER_ID"), workers);
@@ -51,6 +54,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): DiscordBridgeC
     guildId,
     allowedUserIds,
     allowedUserIdSet: new Set(allowedUserIds),
+    allowedRoleIds,
+    allowedRoleIdSet: new Set(allowedRoleIds),
     channelMappings,
     channelMappingById: new Map(channelMappings.map((mapping) => [mapping.channelId, mapping])),
     workers,
@@ -91,6 +96,18 @@ function parseAllowedSnowflakes(raw: string, name: string): string[] {
   }
 
   return values;
+}
+
+function parseOptionalSnowflakes(raw: string | undefined, name: string): string[] {
+  if (!raw) {
+    return [];
+  }
+
+  return raw
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .map((value) => parseSnowflake(value, name));
 }
 
 function parseChannelMappings(raw: string): DiscordChannelMapping[] {

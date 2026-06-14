@@ -4,8 +4,8 @@
 
 - Date: 2026-06-14
 - Repository: `Codex_Discord_BOT`
-- Phase: TypeScript skeleton
-- Runtime code: skeleton only, no Discord Gateway login yet
+- Phase: Discord command skeleton
+- Runtime code: Gateway client and guild slash command skeleton available, gated by env flags
 - Primary direction: separate Discord pilot, not a Telegram rewrite
 
 ## Current goal
@@ -34,13 +34,19 @@ The planned model is:
 - Config parser, Discord context helpers, and AttysCodexBridge-compatible worker client created under `src/`.
 - Unit tests added for config parsing, Discord context keys, and worker-client HTTP/NDJSON behavior.
 - Validation passed: `npm test`, `npm run typecheck`, `npm run build`, and `ggshield secret scan path --recursive --yes --use-gitignore .`.
+- Optional `.env` loader added for local runtime without committing secrets.
+- Guild-scoped slash command definitions added for `/doctor`, `/session`, `/workers`, `/new`, `/attach`, `/handoff`, and `/abort`.
+- Discord Gateway client adapter added behind `DISCORD_LOGIN=true`; command registration is behind `DISCORD_REGISTER_COMMANDS=true`.
+- In-memory session registry and testable command handler core added for mapped forum channel/thread contexts.
+- Config-only command behavior is implemented for `/doctor`, `/session`, `/workers`, `/new`, `/attach`, `/handoff`, and `/abort` placeholders.
+- Validation passed after this slice: `npm test` (27 tests), `npm run typecheck`, `npm run build`, and `ggshield secret scan path --recursive --yes --use-gitignore .`.
 
 ## Next steps
 
-1. Add Discord Gateway client startup and guild-scoped slash command registration.
-2. Implement first config-only `/doctor` command skeleton.
-3. Add session registry for Discord forum channel/thread contexts.
-4. Wire `/workers`, `/session`, `/new`, `/attach`, `/handoff`, and `/abort` to the worker client.
+1. Create local `.env` from `.env.example` outside Git and add the real Discord token.
+2. Register guild-scoped slash commands against `Private Discord Server`.
+3. Run a private Discord smoke test for `/doctor`, `/session`, `/workers`, `/new`, `/attach`, and `/handoff`.
+4. Wire `/new`, `/session`, `/abort`, and later prompt streaming to real worker sessions.
 5. Add private Discord smoke checklist before treating live behavior as done.
 
 ## Operational notes
@@ -51,6 +57,7 @@ The planned model is:
 - This folder is now a Git repository on `main`, tracking `origin/main` at `https://github.com/Attys-syttA/Codex_Discord_BOT.git`.
 - The initial TypeScript skeleton is ready for the first repository commit and push.
 - `.env.example` contains only fake placeholders and public/non-secret Discord IDs.
+- The real `.env` must stay local and ignored; `DISCORD_LOGIN` and `DISCORD_REGISTER_COMMANDS` default to `false`.
 
 ## Discord pilot identifiers
 

@@ -33,6 +33,7 @@ describe("loadConfig", () => {
     expect(config.applicationId).toBe("100000000000000010");
     expect(config.guildId).toBe("100000000000000001");
     expect(config.allowedUserIds).toEqual(["100000000000000999"]);
+    expect(config.allowedRoleIds).toEqual([]);
     expect(config.channelMappings[0]).toMatchObject({
       channelId: "100000000000000101",
       workerId: "otthon",
@@ -42,6 +43,16 @@ describe("loadConfig", () => {
       label: "Otthon worker",
       baseUrl: "http://127.0.0.1:8787",
     });
+  });
+
+  it("accepts optional role allowlists", () => {
+    const config = loadConfig({
+      ...baseEnv,
+      DISCORD_ALLOWED_ROLE_IDS: "1515659000000000000,1515659000000000001",
+    });
+
+    expect(config.allowedRoleIdSet.has("1515659000000000000")).toBe(true);
+    expect(config.allowedRoleIdSet.has("1515659000000000001")).toBe(true);
   });
 
   it("rejects an empty allowed user list", () => {
