@@ -109,6 +109,27 @@ describe("handleBridgeCommand", () => {
     expect(response.content).toContain("Workspace: E:\\codex_works\\Codex_Discord_BOT");
   });
 
+  it("uses auto workspace aliases to canonicalize forum slug names", async () => {
+    const response = await handleBridgeCommand({
+      ...baseInput,
+      channelId: "1515659999999999999",
+      parentId: "1515658888888888888",
+      parentName: "codex_discord_bot",
+    }, {
+      config: loadConfig({
+        ...env,
+        DISCORD_CHANNEL_MAPPINGS_JSON: "[]",
+        DISCORD_AUTO_WORKSPACE_ROOT: "E:\\codex_works",
+        DISCORD_AUTO_WORKSPACE_ALIASES_JSON: JSON.stringify({
+          codex_discord_bot: "Codex_Discord_BOT",
+        }),
+      }),
+      sessions: new SessionRegistry(),
+    });
+
+    expect(response.content).toContain("Workspace: E:\\codex_works\\Codex_Discord_BOT");
+  });
+
   it("blocks users outside the allowlist", async () => {
     const response = await handleBridgeCommand({ ...baseInput, userId: "1515658000000000000" }, {
       config: loadConfig(env),

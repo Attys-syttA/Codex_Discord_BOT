@@ -39,6 +39,7 @@ describe("loadConfig", () => {
       workerId: "otthon",
     });
     expect(config.autoWorkspaceRoot).toBeUndefined();
+    expect(config.autoWorkspaceAliases.size).toBe(0);
     expect(config.ephemeralResponses).toBe(true);
     expect(config.workers[0]).toMatchObject({
       id: "otthon",
@@ -64,6 +65,23 @@ describe("loadConfig", () => {
     });
 
     expect(config.autoWorkspaceRoot).toBe("E:\\codex_works");
+  });
+
+  it("accepts auto workspace aliases", () => {
+    const config = loadConfig({
+      ...baseEnv,
+      DISCORD_AUTO_WORKSPACE_ALIASES_JSON: JSON.stringify({
+        codex_discord_bot: "Codex_Discord_BOT",
+      }),
+    });
+
+    expect(config.autoWorkspaceAliases.get("codex_discord_bot")).toBe("Codex_Discord_BOT");
+  });
+
+  it("rejects invalid auto workspace alias JSON", () => {
+    expect(() => loadConfig({ ...baseEnv, DISCORD_AUTO_WORKSPACE_ALIASES_JSON: "[]" })).toThrow(
+      "Invalid DISCORD_AUTO_WORKSPACE_ALIASES_JSON",
+    );
   });
 
   it("accepts persistent non-ephemeral Discord responses", () => {

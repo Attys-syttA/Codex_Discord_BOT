@@ -233,3 +233,19 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: `npm run typecheck`; `npm test -- config command-handlers`.
 - Eredmeny: A korabban eltunonek tuno valaszok oka az ephemeral Discord interaction response modell volt: ezek nem rendes, tartos csatornauzenetek. Bekerult a `DISCORD_EPHEMERAL_RESPONSES` kapcsolo. Alapertelmezesben `true`, a NAS example viszont `false`, hogy a privat szerveren a bot valaszai tartos, desktopon es mobilon is lathato thread uzenetek legyenek.
 - Nyitott follow-up: Friss NAS `.env.nas` ertek: `DISCORD_EPHEMERAL_RESPONSES=false`, majd NAS bundle feltoltes/rebuild/restart es uj `/ask` smoke.
+
+## 2026-06-14 20:35 +02:00
+
+- Cel: Discord forum slug es valodi repo mappanev kozti canonical workspace alias.
+- Modositott fajlok: `.env.example`, `discord_nas_bridge/.env.nas.example`, `discord_nas_bridge/README.hu.md`, `src/config.ts`, `src/command-handlers.ts`, `src/index.ts`, `test/config.test.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`; generalt, nem commitolt deploy bundle: `discord_nas_bridge/app/`.
+- Futtatott parancsok: `git status --short --branch`; repo atnevezesi dry-run `E:\codex_works` alatt; erintett repok `git status` ellenorzese; `npm run typecheck`; `npm test -- config command-handlers`; `npm run build`; `npm run nas:bundle:prepare`; `git diff --check`; `npm run check:workspace`.
+- Eredmeny: Nem tortent tomeges repo mappanev-atnevezes. Helyette bekerult a `DISCORD_AUTO_WORKSPACE_ALIASES_JSON` konfiguracio, amellyel peldaul a Discord slug `codex_discord_bot` a worker fele `Codex_Discord_BOT` mappanevre fordul. Ez biztonsagosabb, mert a NAS kontener nem latja kozvetlenul a worker PC `E:\codex_works` fajlrendszeret, es nem kell dirty repokat mozgatni.
+- Nyitott follow-up: Real NAS `.env.nas` frissitese `DISCORD_AUTO_WORKSPACE_ALIASES_JSON={"codex_discord_bot":"Codex_Discord_BOT"}` ertekkel, NAS bundle feltoltes/rebuild/restart, majd `/doctor` smoke.
+
+## 2026-06-14 20:59 +02:00
+
+- Cel: Holnapi folytatasi pont rogzites az aliasos NAS live smoke utan.
+- Modositott fajlok: `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `git status --short --branch`; aktualis diff es naplo/state atnezese; `git diff --check`; `npm run check:workspace`; `ggshield secret scan path --recursive --yes --use-gitignore .`.
+- Eredmeny: A friss NAS kontener a `codex_discord_bot` forum threadben `/doctor` parancsra mar `<CODEX_WORKS_HOME>\Codex_Discord_BOT` workspace-et jelez, tehat a `DISCORD_AUTO_WORKSPACE_ALIASES_JSON` elesben mukodik. A holnapi kezdopont nem uj alapozo fejlesztes: privat Discord smoke checklist, `/handoff` kimenet javitasa, majd session-store atomic/file-lock hardening.
+- Nyitott follow-up: Commit/push utan holnap a checklist dokumentalasa es a `/handoff` copy-paste UX javitasa.

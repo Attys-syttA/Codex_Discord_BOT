@@ -155,6 +155,15 @@ The planned model is:
   - `DISCORD_EPHEMERAL_RESPONSES=true` keeps private "only you can see this" responses,
   - `DISCORD_EPHEMERAL_RESPONSES=false` sends normal persistent thread messages,
   - the NAS example uses persistent responses because project work needs to be visible across desktop/mobile clients and after reopening Discord.
+- Auto workspace mapping can now canonicalize Discord forum slugs:
+  - `DISCORD_AUTO_WORKSPACE_ALIASES_JSON` maps Discord names such as `codex_discord_bot` to real repo folder names such as `Codex_Discord_BOT`,
+  - this avoids renaming all local repositories under `E:\codex_works`,
+  - the NAS container logs the loaded alias count as `autoWorkspaceAliases`.
+- The live NAS smoke passed after the alias deployment:
+  - the real NAS `.env.nas` contains `DISCORD_AUTO_WORKSPACE_ALIASES_JSON={"codex_discord_bot":"Codex_Discord_BOT"}`,
+  - the refreshed NAS container answers `/doctor` from the `codex_discord_bot` forum thread,
+  - the reported workspace is `<CODEX_WORKS_HOME>\Codex_Discord_BOT`,
+  - worker health still reports `remote-worker` through `http://worker-host.example:8787`.
 - Validation passed after this slice:
   - `npm test -- command-handlers`,
   - `npm run typecheck`,
@@ -167,11 +176,15 @@ The planned model is:
 
 ## Next steps
 
-1. Set real NAS `.env.nas` to `DISCORD_EPHEMERAL_RESPONSES=false`.
-2. Upload the refreshed `discord_nas_bridge/` folder including regenerated `app/` to the NAS and rebuild/restart the container.
-3. Run a long `/ask` live smoke and confirm multiple persistent Discord messages appear without `[truncated]`.
-4. Add a private Discord smoke checklist covering `/doctor`, `/new`, `/session`, `/ask`, `/abort`, and unmapped forum auto mapping.
-5. Add file-locking or atomic write hardening for the session store if multiple bot processes are ever allowed.
+1. Start tomorrow with a short private Discord smoke checklist and record the result:
+   - `/doctor` in `codex_discord_bot` must show `<CODEX_WORKS_HOME>\Codex_Discord_BOT`,
+   - `/new` then `/session` must persist a worker session,
+   - `/ask` must return persistent multi-part messages without `[truncated]`,
+   - `/handoff` must produce a usable `codex resume` command,
+   - `/abort` behavior must be verified or explicitly marked as not yet complete.
+2. Improve `/handoff` output so it is easier to copy from Discord and clearly states that it resumes a Codex CLI thread, not the IDE/API chat.
+3. Add file-locking or atomic write hardening for the session store if multiple bot processes are ever allowed.
+4. Commit/push the stabilization checkpoint after the private smoke checklist is documented.
 
 ## Operational notes
 

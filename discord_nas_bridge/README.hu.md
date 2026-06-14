@@ -45,7 +45,15 @@ Ez a mappa a NAS-on futtatandó Discord bridge csomag helye.
    DISCORD_AUTO_WORKSPACE_ROOT=E:\codex_works
    ```
 
-   Ilyenkor egy nem kézzel mapelt fórum neve lesz a repo/projekt mappanév. Például a `codex_discord_bot` fórum a worker felé `<CODEX_WORKS_HOME>\codex_discord_bot` workspace-ként megy tovább. A kézi `DISCORD_CHANNEL_MAPPINGS_JSON` bejegyzések mindig elsőbbséget élveznek.
+   Ilyenkor egy nem kézzel mapelt fórum neve lesz a repo/projekt mappanév. Például a `codex_discord_bot` fórum a worker felé `<CODEX_WORKS_HOME>\codex_discord_bot` workspace-ként menne tovább. A kézi `DISCORD_CHANNEL_MAPPINGS_JSON` bejegyzések mindig elsőbbséget élveznek.
+
+   Ha a Discord fórum neve kisbetűs slug, de a worker gépen a repo mappaneve más kis/nagybetűzést használ, adj meg alias táblát:
+
+   ```env
+   DISCORD_AUTO_WORKSPACE_ALIASES_JSON={"codex_discord_bot":"Codex_Discord_BOT"}
+   ```
+
+   Ezzel a `codex_discord_bot` fórum már `<CODEX_WORKS_HOME>\Codex_Discord_BOT` workspace-re mutat. Ez szándékosan statikus konfiguráció, mert a NAS konténer nem látja közvetlenül a worker PC `E:\codex_works` fájlrendszerét.
 
 6. Indítás a NAS-on, a feltöltött mappából:
 

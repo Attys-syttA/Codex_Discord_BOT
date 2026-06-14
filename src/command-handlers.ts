@@ -129,11 +129,12 @@ function resolveAutoWorkspaceMapping(
     return undefined;
   }
 
-  const projectName = (input.isThread ? input.parentName : input.channelName)?.trim();
-  if (!projectName) {
+  const rawProjectName = (input.isThread ? input.parentName : input.channelName)?.trim();
+  if (!rawProjectName) {
     return undefined;
   }
 
+  const projectName = config.autoWorkspaceAliases.get(rawProjectName.toLowerCase()) ?? rawProjectName;
   return {
     channelId: projectChannelId,
     workspace: joinWorkspacePath(config.autoWorkspaceRoot, projectName),

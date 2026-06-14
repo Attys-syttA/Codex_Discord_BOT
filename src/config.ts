@@ -24,6 +24,7 @@ export interface DiscordBridgeConfig {
   workers: WorkerTarget[];
   defaultWorkerId: string;
   autoWorkspaceRoot?: string;
+  autoWorkspaceAliases: Map<string, string>;
   ephemeralResponses: boolean;
   workerTimeoutMs: number;
   sessionStorePath: string;
@@ -39,6 +40,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): DiscordBridgeC
   const workers = parseWorkers(requireEnv(env, "DISCORD_WORKERS_JSON"));
   const defaultWorkerId = parseDefaultWorkerId(optionalEnv(env, "DISCORD_DEFAULT_WORKER_ID"), workers);
   const autoWorkspaceRoot = optionalEnv(env, "DISCORD_AUTO_WORKSPACE_ROOT");
+  const autoWorkspaceAliases = parseAutoWorkspaceAliases(optionalEnv(env, "DISCORD_AUTO_WORKSPACE_ALIASES_JSON"));
   const ephemeralResponses = parseBoolean(optionalEnv(env, "DISCORD_EPHEMERAL_RESPONSES"), true, "DISCORD_EPHEMERAL_RESPONSES");
   const workerTimeoutMs = parsePositiveInteger(
     optionalEnv(env, "DISCORD_WORKER_TIMEOUT_MS"),
@@ -67,6 +69,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): DiscordBridgeC
     workers,
     defaultWorkerId,
     ...(autoWorkspaceRoot ? { autoWorkspaceRoot } : {}),
+    autoWorkspaceAliases,
     ephemeralResponses,
     workerTimeoutMs,
     sessionStorePath,
@@ -162,6 +165,36 @@ function parseWorkers(raw: string): WorkerTarget[] {
   }
 
   return workers;
+}
+
+function parseAutoWorkspaceAliases(raw: string | undefined): Map<string, string> {
+  if (!raw) {
+    return new Map();
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`Invalid DISCORD_AUTO_WORKSPACE_ALIASES_JSON: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  const record = requireRecord(parsed, "DISCORD_AUTO_WORKSPACE_ALIASES_JSON");
+  const aliases = new Map<string, string>();
+  for (const [sourceName, targetName] of Object.entries(record)) {
+    const source = sourceName.trim();
+    const target = requireString(targetName, `DISCORD_AUTO_WORKSPACE_ALIASES_JSON.${sourceName}`);
+    if (!source) {
+      throw new Error("Invalid DISCORD_AUTO_WORKSPACE_ALIASES_JSON: alias keys must be non-empty");
+    }
+    aliases.set(normalizeWorkspaceAliasKey(source), target);
+  }
+
+  return aliases;
+}
+
+function normalizeWorkspaceAliasKey(value: string): string {
+  return value.trim().toLowerCase();
 }
 
 function parseDefaultWorkerId(raw: string | undefined, workers: WorkerTarget[]): string {
