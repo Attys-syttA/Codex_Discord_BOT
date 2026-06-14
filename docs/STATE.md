@@ -4,8 +4,8 @@
 
 - Date: 2026-06-14
 - Repository: `Codex_Discord_BOT`
-- Phase: Worker prompt command skeleton
-- Runtime code: Gateway client and guild slash command skeleton available, with worker-backed `/new`, `/attach`, `/session`, `/abort`, and `/ask`
+- Phase: Worker prompt command skeleton with durable session registry
+- Runtime code: Gateway client and guild slash command skeleton available, with worker-backed `/new`, `/attach`, `/session`, `/abort`, and `/ask`; runtime session mappings can persist to `.discord-bot-state/sessions.json`
 - Primary direction: separate Discord pilot, not a Telegram rewrite
 
 ## Current goal
@@ -51,6 +51,11 @@ The planned model is:
   - The command requires an existing `/new` or `/attach` session and does not require Discord Message Content Intent.
   - Worker text deltas, tool start/end events, and token usage are summarized into a bounded Discord response.
 - Validation passed after this slice: `npm test` (31 tests), `npm run typecheck`, `npm run build`, and `ggshield secret scan path --recursive --yes --use-gitignore .`.
+- Durable session registry added:
+  - `FileSessionRegistry` stores Discord context to worker/Codex session mappings in local JSON.
+  - `DISCORD_SESSION_STORE_PATH` defaults to `.discord-bot-state/sessions.json`, which is ignored by Git.
+  - Runtime bot login now uses the file-backed registry so mappings survive process restarts.
+- Validation passed after this slice: `npm test` (33 tests), `npm run typecheck`, `npm run build`, and `ggshield secret scan path --recursive --yes --use-gitignore .`.
 
 ## Next steps
 
@@ -58,7 +63,8 @@ The planned model is:
 2. Register guild-scoped slash commands against `Private Discord Server`.
 3. Run a private Discord smoke test for `/doctor`, `/session`, `/workers`, `/new`, `/attach`, `/handoff`, `/abort`, and `/ask`.
 4. Add incremental Discord message editing/chunking for long streamed `/ask` responses.
-5. Add private Discord smoke checklist before treating live behavior as done.
+5. Add file-locking or atomic write hardening for the session store if multiple bot processes are ever allowed.
+6. Add private Discord smoke checklist before treating live behavior as done.
 
 ## Operational notes
 
@@ -69,6 +75,7 @@ The planned model is:
 - The initial TypeScript skeleton is ready for the first repository commit and push.
 - `.env.example` contains only fake placeholders and public/non-secret Discord IDs.
 - The real `.env` must stay local and ignored; `DISCORD_LOGIN` and `DISCORD_REGISTER_COMMANDS` default to `false`.
+- Runtime session state belongs under `.discord-bot-state/` by default and must not be committed.
 
 ## Discord pilot identifiers
 

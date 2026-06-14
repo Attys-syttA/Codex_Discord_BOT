@@ -24,6 +24,7 @@ export interface DiscordBridgeConfig {
   workers: WorkerTarget[];
   defaultWorkerId: string;
   workerTimeoutMs: number;
+  sessionStorePath: string;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): DiscordBridgeConfig {
@@ -40,6 +41,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): DiscordBridgeC
     120_000,
     "DISCORD_WORKER_TIMEOUT_MS",
   );
+  const sessionStorePath = optionalEnv(env, "DISCORD_SESSION_STORE_PATH") ?? ".discord-bot-state/sessions.json";
 
   const workerIds = new Set(workers.map((worker) => worker.id));
   for (const mapping of channelMappings) {
@@ -61,6 +63,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): DiscordBridgeC
     workers,
     defaultWorkerId,
     workerTimeoutMs,
+    sessionStorePath,
   };
 }
 

@@ -43,6 +43,16 @@ describe("loadConfig", () => {
       label: "Otthon worker",
       baseUrl: "http://127.0.0.1:8787",
     });
+    expect(config.sessionStorePath).toBe(".discord-bot-state/sessions.json");
+  });
+
+  it("accepts a custom session store path", () => {
+    const config = loadConfig({
+      ...baseEnv,
+      DISCORD_SESSION_STORE_PATH: "runtime/sessions.json",
+    });
+
+    expect(config.sessionStorePath).toBe("runtime/sessions.json");
   });
 
   it("accepts optional role allowlists", () => {

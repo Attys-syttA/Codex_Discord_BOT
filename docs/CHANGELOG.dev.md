@@ -65,3 +65,11 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git diff --check`.
 - Eredmeny: Letrejott az `/ask` slash command, amely a mar rogzitett worker sessionre kuldi a promptot, osszegyujti a worker text/tool/token esemenyeket, es rovid Discord valaszba rendezi. A Discord adapter deferred reply-t hasznal, hogy hosszabb parancsoknal se jarjon le az interaction. A suite 31 zold tesztet futtat, typecheck/build sikeres, `ggshield` nem talalt secretet.
 - Nyitott follow-up: Commit/push; utana valodi `.env`, guild command registration es privat Discord smoke.
+
+## 2026-06-14 13:49 +02:00
+
+- Cel: A Discord context es worker/Codex session osszerendelesek perzisztalasa bot ujrainditasok kozott.
+- Modositott fajlok: `.env.example`, `src/config.ts`, `src/index.ts`, `src/session-registry.ts`, `test/config.test.ts`, `test/session-registry.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git diff --check`.
+- Eredmeny: Letrejott a `FileSessionRegistry`, amely helyi JSON store-ba menti a session metadata-t. A `DISCORD_SESSION_STORE_PATH` alapertelmezese `.discord-bot-state/sessions.json`, a runtime login pedig file-backed registryt hasznal. A suite 33 zold tesztet futtat, typecheck/build sikeres, `ggshield` nem talalt secretet.
+- Nyitott follow-up: Commit/push; utana valodi `.env`, guild command registration es privat Discord smoke.
