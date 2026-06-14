@@ -129,3 +129,11 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: `.\scripts\prepare-nas-bundle.ps1`; `docker build -f discord_nas_bridge\Dockerfile -t codex-discord-bridge:nas-bundle discord_nas_bridge`; `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git diff --check`.
 - Eredmeny: A compose build context mar a feltoltott `discord_nas_bridge/` mappa, a Dockerfile pedig az ebben levo generalt `app/` bundle-bol epit. A helyi Docker build sikeres volt, a build context nem tartalmazza a valodi `.env.nas` fajlt. A suite 34 zold tesztet futtat, typecheck/build sikeres, `ggshield` nem talalt secretet.
 - Nyitott follow-up: A friss `discord_nas_bridge/` mappa feltoltese NAS-ra az `app/` almappaval egyutt.
+
+## 2026-06-14 16:18 +02:00
+
+- Cel: GitHubon is hasznalhato ellenorzo workspace es helyi preflight toolok letrehozasa.
+- Modositott fajlok: `.gitattributes`, `.github/SECURITY.md`, `.github/dependabot.yml`, `.github/workflows/ci.yml`, `README.md`, `package.json`, `scripts/check-workspace.ps1`, `scripts/prepare-nas-bundle.mjs`, `scripts/prepare-nas-bundle.ps1`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm run check:workspace`.
+- Eredmeny: Letrejott a Node 20 GitHub Actions CI typecheck/test/build/audit/NAS-bundle/Docker build ellenorzesekkel, Dependabot npm es GitHub Actions frissitesekkel, SECURITY policyvel, cross-platform NAS bundle scripttel es Windows helyi `check:workspace` preflighttal. A helyi workspace check sikeres volt: 34 Vitest teszt zold, typecheck/build/audit zold, NAS Docker build zold, `ggshield` nem talalt secretet.
+- Nyitott follow-up: `git diff --check`, commit/push, majd az elso GitHub Actions futas ellenorzese.

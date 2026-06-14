@@ -29,3 +29,29 @@ Az első projektfázis dokumentációs és architekturális:
 A Discord bot ne kapjon közvetlen repo- vagy credential-hozzáférést. A worker PC marad a bizalmi határ: ott él a Codex auth, GitHub auth, Git és a helyi fájlrendszer.
 
 Tokenek, worker secret-ek és `.env` fájlok nem kerülhetnek Gitbe.
+
+## Ellenőrző workspace
+
+Helyi fejlesztésnél a fő ellenőrzés:
+
+```powershell
+npm run check:workspace
+```
+
+Ez lefuttatja a typecheck, Vitest, build, NAS bundle, whitespace és secret scan ellenőrzéseket. Ha Docker elérhető, a NAS Docker image buildet is kipróbálja.
+
+GitHubon a `.github/workflows/ci.yml` futtatja a Node 20 alapú CI-t:
+
+- `npm run typecheck`
+- `npm test`
+- `npm run build`
+- `npm run audit:deps`
+- `npm run nas:bundle:prepare`
+- NAS Docker image build
+- `git diff --check`
+
+NAS feltöltés előtt mindig készíts friss deploy bundle-t:
+
+```powershell
+npm run nas:bundle:prepare
+```
