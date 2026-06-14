@@ -23,4 +23,4 @@ RUN chmod -R a+rX /app
 
 USER node
 
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/src/index.js"]

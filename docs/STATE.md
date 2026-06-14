@@ -4,7 +4,7 @@
 
 - Date: 2026-06-14
 - Repository: `Codex_Discord_BOT`
-- Phase: Discord `/ask` live smoke passed; NAS container runtime fix in progress
+- Phase: Discord `/ask` live smoke passed; NAS container entrypoint fix in progress
 - Runtime code: Gateway client and guild slash command skeleton available, with worker-backed `/new`, `/attach`, `/session`, `/abort`, and `/ask`; runtime session mappings can persist to `.discord-bot-state/sessions.json`
 - Primary direction: separate Discord pilot, not a Telegram rewrite
 
@@ -100,10 +100,12 @@ The planned model is:
 - GitHub Actions CI passed after the workspace tooling commit.
 - NAS container runtime log showed `EACCES: permission denied, open '/app/package.json'` when starting with `npm run start` as the non-root `node` user.
 - NAS Docker runtime was adjusted to start with `node dist/index.js` directly and make `/app` readable before switching to `USER node`.
+- Fresh NAS log then showed `MODULE_NOT_FOUND: Cannot find module '/app/dist/index.js'`.
+- The TypeScript build emits `dist/src/index.js` because `tsconfig.json` uses `rootDir: "."`; `package.json` and the NAS Docker `CMD` now use `node dist/src/index.js`.
 
 ## Next steps
 
-1. Validate and push the NAS container runtime EACCES fix.
+1. Validate and push the NAS container entrypoint fix.
 2. Upload the refreshed `discord_nas_bridge/` folder to the NAS including the generated `app/` subfolder, then run `docker compose up -d --build` from that NAS folder.
 3. Keep NAS `DISCORD_WORKERS_JSON` pointed at `http://worker-host.example:8787` while the worker runs on the home PC.
 4. Add incremental Discord message editing/chunking for long streamed `/ask` responses.

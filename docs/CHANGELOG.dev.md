@@ -145,3 +145,11 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: `git status --short --branch`; NAS log export atnezese; `npm run check:workspace`.
 - Eredmeny: A NAS log szerint a kontener indulasakor az `npm run start` nem tudta olvasni a `/app/package.json` fajlt a nem-root `node` userrel (`EACCES`). A Dockerfile runtime parancsa kozvetlen `node dist/index.js` inditasra valt, es a `/app` olvashatosaga explicit beallitast kap a `USER node` elott. A helyi workspace check sikeres volt: 34 Vitest teszt zold, typecheck/build/audit zold, NAS Docker build zold, `ggshield` nem talalt secretet.
 - Nyitott follow-up: Commit/push, majd friss NAS feltoltes es kontener ujraepites.
+
+## 2026-06-14 16:50 +02:00
+
+- Cel: NAS kontener `MODULE_NOT_FOUND` entrypoint hiba javitasa.
+- Modositott fajlok: `package.json`, `discord_nas_bridge/Dockerfile`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: friss NAS log export atnezese; `git status --short --branch`; `npm run check:workspace`; `docker run --rm ... codex-discord-bridge:nas-bundle` fake env-vel es `DISCORD_LOGIN=false` mellett.
+- Eredmeny: A friss NAS log szerint a kontener `Cannot find module '/app/dist/index.js'` hibaval allt le. A TypeScript build `rootDir: "."` miatt `dist/src/index.js` ala fordit, ezert a production `start` script es a Docker `CMD` is erre az entrypointra lett allitva. A teljes workspace check sikeres volt, majd a production Docker image fake env-vel, Discord login nelkul sikeresen betoltotte a konfiguraciot es 0 exit code-dal kilepett.
+- Nyitott follow-up: Commit/push, friss NAS bundle feltoltes es kontener ujraepites.
