@@ -137,3 +137,11 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: `npm run check:workspace`.
 - Eredmeny: Letrejott a Node 20 GitHub Actions CI typecheck/test/build/audit/NAS-bundle/Docker build ellenorzesekkel, Dependabot npm es GitHub Actions frissitesekkel, SECURITY policyvel, cross-platform NAS bundle scripttel es Windows helyi `check:workspace` preflighttal. A helyi workspace check sikeres volt: 34 Vitest teszt zold, typecheck/build/audit zold, NAS Docker build zold, `ggshield` nem talalt secretet.
 - Nyitott follow-up: `git diff --check`, commit/push, majd az elso GitHub Actions futas ellenorzese.
+
+## 2026-06-14 16:31 +02:00
+
+- Cel: NAS kontener runtime jogosultsagi hiba javitasa.
+- Modositott fajlok: `discord_nas_bridge/Dockerfile`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `git status --short --branch`; NAS log export atnezese; `npm run check:workspace`.
+- Eredmeny: A NAS log szerint a kontener indulasakor az `npm run start` nem tudta olvasni a `/app/package.json` fajlt a nem-root `node` userrel (`EACCES`). A Dockerfile runtime parancsa kozvetlen `node dist/index.js` inditasra valt, es a `/app` olvashatosaga explicit beallitast kap a `USER node` elott. A helyi workspace check sikeres volt: 34 Vitest teszt zold, typecheck/build/audit zold, NAS Docker build zold, `ggshield` nem talalt secretet.
+- Nyitott follow-up: Commit/push, majd friss NAS feltoltes es kontener ujraepites.

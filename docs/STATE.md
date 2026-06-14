@@ -4,7 +4,7 @@
 
 - Date: 2026-06-14
 - Repository: `Codex_Discord_BOT`
-- Phase: Discord `/ask` live smoke passed; GitHub/CI workspace tooling in progress
+- Phase: Discord `/ask` live smoke passed; NAS container runtime fix in progress
 - Runtime code: Gateway client and guild slash command skeleton available, with worker-backed `/new`, `/attach`, `/session`, `/abort`, and `/ask`; runtime session mappings can persist to `.discord-bot-state/sessions.json`
 - Primary direction: separate Discord pilot, not a Telegram rewrite
 
@@ -97,10 +97,13 @@ The planned model is:
   - `.github/workflows/ci.yml` runs Node 20 CI checks and NAS Docker build on push, pull request, and manual dispatch.
   - Dependabot is configured for npm and GitHub Actions updates.
   - `.github/SECURITY.md` documents private vulnerability reporting expectations.
+- GitHub Actions CI passed after the workspace tooling commit.
+- NAS container runtime log showed `EACCES: permission denied, open '/app/package.json'` when starting with `npm run start` as the non-root `node` user.
+- NAS Docker runtime was adjusted to start with `node dist/index.js` directly and make `/app` readable before switching to `USER node`.
 
 ## Next steps
 
-1. Commit/push the GitHub/CI workspace tooling and confirm the first GitHub Actions run.
+1. Validate and push the NAS container runtime EACCES fix.
 2. Upload the refreshed `discord_nas_bridge/` folder to the NAS including the generated `app/` subfolder, then run `docker compose up -d --build` from that NAS folder.
 3. Keep NAS `DISCORD_WORKERS_JSON` pointed at `http://worker-host.example:8787` while the worker runs on the home PC.
 4. Add incremental Discord message editing/chunking for long streamed `/ask` responses.
