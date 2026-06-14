@@ -28,6 +28,16 @@ export const commandDefinitions: RESTPostAPIChatInputApplicationCommandsJSONBody
     )
     .toJSON(),
   new SlashCommandBuilder()
+    .setName("ask")
+    .setDescription("Send a prompt to the active Codex worker session.")
+    .addStringOption((option) =>
+      option
+        .setName("prompt")
+        .setDescription("Prompt text to send to Codex.")
+        .setRequired(true),
+    )
+    .toJSON(),
+  new SlashCommandBuilder()
     .setName("handoff")
     .setDescription("Show resume metadata for the current Codex thread.")
     .toJSON(),

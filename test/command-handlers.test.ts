@@ -58,6 +58,7 @@ describe("handleBridgeCommand", () => {
         workspace: "E:\\codex_works\\Codex_Discord_BOT",
       }),
       abort: async () => undefined,
+      prompt: async () => undefined,
       ...overrides,
     };
   }
@@ -186,6 +187,65 @@ describe("handleBridgeCommand", () => {
 
     expect(calls).toEqual(["worker-session-1"]);
     expect(response.content).toContain("Abort requested");
+  });
+
+  it("requires an active worker session before /ask", async () => {
+    const response = await handleBridgeCommand({
+      ...baseInput,
+      commandName: "ask",
+      options: { prompt: "Hol tartunk?" },
+    }, {
+      config: loadConfig(env),
+      sessions: new SessionRegistry(),
+      createWorkerClient: () => createMockWorker(),
+    });
+
+    expect(response.content).toContain("Use /new or /attach first");
+  });
+
+  it("sends /ask prompts to the active worker session", async () => {
+    const sessions = new SessionRegistry();
+    const config = loadConfig(env);
+    await handleBridgeCommand({ ...baseInput, commandName: "new" }, {
+      config,
+      sessions,
+      createWorkerClient: () => createMockWorker(),
+    });
+
+    const calls: Array<{ sessionId: string; input: unknown }> = [];
+    const response = await handleBridgeCommand({
+      ...baseInput,
+      commandName: "ask",
+      options: { prompt: "Folytasd a Discord bridge-et." },
+    }, {
+      config,
+      sessions,
+      createWorkerClient: () => createMockWorker({
+        prompt: async (sessionId, input, callbacks) => {
+          calls.push({ sessionId, input });
+          callbacks?.onToolStart?.("shell_command", "tool-1");
+          callbacks?.onTextDelta?.("Rendben, ");
+          callbacks?.onTextDelta?.("folytatom.");
+          callbacks?.onToolEnd?.("tool-1", false);
+          callbacks?.onTurnComplete?.({ inputTokens: 10, cachedInputTokens: 2, outputTokens: 5 });
+        },
+      }),
+    });
+
+    expect(calls).toEqual([
+      {
+        sessionId: "worker-session-1",
+        input: {
+          prompt: "Folytasd a Discord bridge-et.",
+          workspace: "E:\\codex_works\\Codex_Discord_BOT",
+          threadId: "codex-thread-new",
+        },
+      },
+    ]);
+    expect(response.content).toContain("Codex response");
+    expect(response.content).toContain("Rendben, folytatom.");
+    expect(response.content).toContain("Tools: shell_command started (tool-1); tool-1 finished");
+    expect(response.content).toContain("Tokens: in 10, cached 2, out 5");
   });
 
   it("renders /doctor with worker health from the injectable client", async () => {

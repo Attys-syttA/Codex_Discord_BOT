@@ -31,7 +31,7 @@ export interface BridgeCommandDeps {
 
 export type BridgeWorkerClient = Pick<
   WorkerClient,
-  "getHealth" | "createSession" | "getSessionInfo" | "newThread" | "resumeThread" | "abort"
+  "getHealth" | "createSession" | "getSessionInfo" | "newThread" | "resumeThread" | "abort" | "prompt"
 >;
 
 interface ResolvedContext {
@@ -69,6 +69,8 @@ export async function handleBridgeCommand(
       return response(await renderNewSession(input, deps, resolved));
     case "attach":
       return response(await renderAttach(input, deps, resolved));
+    case "ask":
+      return response(await renderAsk(input, deps, resolved));
     case "handoff":
       return response(renderHandoff(deps.sessions.get(resolved.contextKey), resolved));
     case "abort":
@@ -238,6 +240,63 @@ async function renderAttach(
   ].join("\n");
 }
 
+async function renderAsk(
+  input: BridgeCommandInput,
+  deps: BridgeCommandDeps,
+  resolved: ResolvedContext,
+): Promise<string> {
+  const prompt = input.options?.prompt?.trim();
+  if (!prompt) {
+    return "Missing required option: prompt";
+  }
+
+  const metadata = deps.sessions.get(resolved.contextKey);
+  if (!metadata?.workerSessionId) {
+    return "No active worker session is recorded for this context yet. Use /new or /attach first.";
+  }
+
+  const textParts: string[] = [];
+  const toolEvents: string[] = [];
+  let usage: { inputTokens?: number; cachedInputTokens?: number; outputTokens?: number } | undefined;
+
+  try {
+    await createClient(deps, resolved.worker).prompt(
+      metadata.workerSessionId,
+      {
+        prompt,
+        workspace: metadata.workspace,
+        threadId: metadata.codexThreadId ?? null,
+      },
+      {
+        onTextDelta: (delta) => textParts.push(delta),
+        onToolStart: (toolName, toolCallId) => toolEvents.push(`${toolName} started (${toolCallId})`),
+        onToolEnd: (toolCallId, isError) => toolEvents.push(`${toolCallId} ${isError ? "failed" : "finished"}`),
+        onTurnComplete: (nextUsage) => {
+          usage = nextUsage;
+        },
+      },
+    );
+  } catch (error) {
+    return `Codex prompt failed: ${error instanceof Error ? error.message : String(error)}`;
+  }
+
+  const answer = textParts.join("").trim() || "(no text returned)";
+  const lines = [
+    "Codex response",
+    truncateDiscordMessage(answer, 1_500),
+  ];
+
+  if (toolEvents.length > 0) {
+    lines.push(`Tools: ${truncateDiscordMessage(toolEvents.join("; "), 250)}`);
+  }
+
+  if (usage) {
+    lines.push(`Tokens: in ${usage.inputTokens ?? "?"}, cached ${usage.cachedInputTokens ?? "?"}, out ${usage.outputTokens ?? "?"}`);
+  }
+
+  return truncateDiscordMessage(lines.join("\n"), 1_950);
+}
+
 function renderHandoff(metadata: SessionMetadata | undefined, resolved: ResolvedContext): string {
   const threadId = metadata?.codexThreadId;
   if (!threadId) {
@@ -301,4 +360,12 @@ function createClient(deps: BridgeCommandDeps, worker: WorkerTarget): BridgeWork
     worker,
     timeoutMs: deps.config.workerTimeoutMs,
   });
+}
+
+function truncateDiscordMessage(value: string, maxLength: number): string {
+  if (value.length <= maxLength) {
+    return value;
+  }
+
+  return `${value.slice(0, Math.max(0, maxLength - 14)).trimEnd()}\n[truncated]`;
 }

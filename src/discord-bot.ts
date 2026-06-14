@@ -58,6 +58,8 @@ async function handleChatInputInteraction(
   }
 
   try {
+    await interaction.deferReply({ ephemeral: true });
+
     const parentId = "parentId" in channel ? channel.parentId : undefined;
     const response = await handleBridgeCommand(
       {
@@ -73,12 +75,15 @@ async function handleChatInputInteraction(
       { config, sessions },
     );
 
-    await interaction.reply(response);
+    await interaction.editReply({ content: response.content });
   } catch (error) {
-    await interaction.reply({
-      content: `Command failed: ${error instanceof Error ? error.message : String(error)}`,
-      ephemeral: true,
-    });
+    const content = `Command failed: ${error instanceof Error ? error.message : String(error)}`;
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ content });
+      return;
+    }
+
+    await interaction.reply({ content, ephemeral: true });
   }
 }
 

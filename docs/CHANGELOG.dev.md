@@ -57,3 +57,11 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git status --short --branch`.
 - Eredmeny: A `/new` mar worker sessiont hoz letre es uj Codex threadet indit; az `/attach` worker sessionon keresztul resume-olja a megadott threadet; a `/session` ismert worker sessionnel elo infot frissit; az `/abort` a worker abort endpointot hivja. A suite 29 zold tesztet futtat, typecheck/build sikeres, `ggshield` nem talalt secretet.
 - Nyitott follow-up: Valodi `.env` + guild command registration + privat Discord smoke, majd prompt submission es streamed Discord valaszok.
+
+## 2026-06-14 13:42 +02:00
+
+- Cel: Elso prompt submission parancs hozzaadasa a Discord slash-command felulethez.
+- Modositott fajlok: `src/command-definitions.ts`, `src/command-handlers.ts`, `src/discord-bot.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git diff --check`.
+- Eredmeny: Letrejott az `/ask` slash command, amely a mar rogzitett worker sessionre kuldi a promptot, osszegyujti a worker text/tool/token esemenyeket, es rovid Discord valaszba rendezi. A Discord adapter deferred reply-t hasznal, hogy hosszabb parancsoknal se jarjon le az interaction. A suite 31 zold tesztet futtat, typecheck/build sikeres, `ggshield` nem talalt secretet.
+- Nyitott follow-up: Commit/push; utana valodi `.env`, guild command registration es privat Discord smoke.

@@ -4,8 +4,8 @@
 
 - Date: 2026-06-14
 - Repository: `Codex_Discord_BOT`
-- Phase: Worker-backed command skeleton
-- Runtime code: Gateway client and guild slash command skeleton available, with worker-backed `/new`, `/attach`, `/session`, and `/abort`
+- Phase: Worker prompt command skeleton
+- Runtime code: Gateway client and guild slash command skeleton available, with worker-backed `/new`, `/attach`, `/session`, `/abort`, and `/ask`
 - Primary direction: separate Discord pilot, not a Telegram rewrite
 
 ## Current goal
@@ -46,13 +46,18 @@ The planned model is:
   - `/session` refreshes live worker session info when a worker session is known.
   - `/abort` calls the worker abort endpoint for the recorded worker session.
 - Validation passed after this slice: `npm test` (29 tests), `npm run typecheck`, `npm run build`, and `ggshield secret scan path --recursive --yes --use-gitignore .`.
+- Prompt submission command added:
+  - `/ask` sends a prompt to the active worker session for the current mapped Discord context.
+  - The command requires an existing `/new` or `/attach` session and does not require Discord Message Content Intent.
+  - Worker text deltas, tool start/end events, and token usage are summarized into a bounded Discord response.
+- Validation passed after this slice: `npm test` (31 tests), `npm run typecheck`, `npm run build`, and `ggshield secret scan path --recursive --yes --use-gitignore .`.
 
 ## Next steps
 
 1. Create local `.env` from `.env.example` outside Git and add the real Discord token.
 2. Register guild-scoped slash commands against `Private Discord Server`.
-3. Run a private Discord smoke test for `/doctor`, `/session`, `/workers`, `/new`, `/attach`, `/handoff`, and `/abort`.
-4. Add prompt submission and streamed Discord response delivery.
+3. Run a private Discord smoke test for `/doctor`, `/session`, `/workers`, `/new`, `/attach`, `/handoff`, `/abort`, and `/ask`.
+4. Add incremental Discord message editing/chunking for long streamed `/ask` responses.
 5. Add private Discord smoke checklist before treating live behavior as done.
 
 ## Operational notes
