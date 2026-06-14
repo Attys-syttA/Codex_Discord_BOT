@@ -4,7 +4,7 @@
 
 - Date: 2026-06-14
 - Repository: `Codex_Discord_BOT`
-- Phase: Discord `/ask` payload fix ready; token rotation required
+- Phase: Discord `/ask` live smoke passed; response formatting hardening in progress
 - Runtime code: Gateway client and guild slash command skeleton available, with worker-backed `/new`, `/attach`, `/session`, `/abort`, and `/ask`; runtime session mappings can persist to `.discord-bot-state/sessions.json`
 - Primary direction: separate Discord pilot, not a Telegram rewrite
 
@@ -75,16 +75,20 @@ The planned model is:
   - Discord bridge previously sent `{ prompt: "..." }`, so Codex CLI received empty stdin.
   - The command handler now sends `{ text: prompt }`.
 - Validation passed after this slice: `npm test` (33 tests), `npm run typecheck`, and `npm run build`.
+- Discord token was rotated after the accidental real-env `docker compose config` output.
+- `/ask` live smoke passed after the payload fix and returned a Codex response through Discord.
+- `/ask` response formatting was hardened to avoid exposing raw worker command lines in Discord:
+  - Tool details are summarized as event and failure counts.
+  - Raw PowerShell/Git command strings are not included in the bridge summary.
+- Validation passed after this slice: `npm test` (34 tests), `npm run typecheck`, and `npm run build`.
 
 ## Next steps
 
-1. Reset the Discord bot token in Developer Portal because `docker compose config` was run once against the real `.env.nas` and printed env values.
-2. Update both local `.env` and `discord_nas_bridge/.env.nas` with the new token.
-3. Restart the local Discord bot and retry `/ask`.
-4. Prepare NAS deployment handoff: copy `discord_nas_bridge/` files to NAS and keep `DISCORD_WORKERS_JSON` pointed at `http://worker-host.example:8787`.
-5. Add incremental Discord message editing/chunking for long streamed `/ask` responses.
-6. Add file-locking or atomic write hardening for the session store if multiple bot processes are ever allowed.
-7. Add private Discord smoke checklist before treating live behavior as done.
+1. Restart the local Discord bot after the response-formatting commit and retry `/ask`.
+2. Prepare NAS deployment handoff: copy `discord_nas_bridge/` files to NAS and keep `DISCORD_WORKERS_JSON` pointed at `http://worker-host.example:8787`.
+3. Add incremental Discord message editing/chunking for long streamed `/ask` responses.
+4. Add file-locking or atomic write hardening for the session store if multiple bot processes are ever allowed.
+5. Add private Discord smoke checklist before treating live behavior as done.
 
 ## Operational notes
 

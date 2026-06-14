@@ -97,3 +97,11 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: `rg` a Telegram worker prompt contractra; `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git diff --check`.
 - Eredmeny: Az `/ask` hiba oka nem NAS hiany volt, hanem payload mismatch: a worker `CodexPromptInput` alakot var (`string` vagy `{ text }`), a Discord bridge pedig `{ prompt }` objektumot kuldott, ezert a Codex CLI ures stdint kapott. A bridge most `{ text: prompt }` payloadot kuld. A suite 33 zold tesztet futtat, typecheck/build sikeres, `ggshield` nem talalt secretet.
 - Nyitott follow-up: Discord bot token reset a korabbi valos `docker compose config` output miatt; uj token beirasa a helyi `.env` es `discord_nas_bridge/.env.nas` fajlokba; bot ujrainditas es `/ask` ujraproba.
+
+## 2026-06-14 15:17 +02:00
+
+- Cel: Sikeres `/ask` live smoke utan a Discord valasz tool-osszefoglalojanak tisztitasa.
+- Modositott fajlok: `src/command-handlers.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git diff --check`.
+- Eredmeny: A token rotacio utan az `/ask` vegigment Discord -> bridge -> worker -> Codex CLI -> Discord uton. A bridge most nem jelenit meg nyers PowerShell/Git command line reszleteket a `Tools` sorban, csak tool event es hibaszamot. A suite 34 zold tesztet futtat, typecheck/build sikeres, `ggshield` nem talalt secretet.
+- Nyitott follow-up: Commit/push; helyi bot ujrainditas az uj valaszformazassal; NAS handoff/deploy.

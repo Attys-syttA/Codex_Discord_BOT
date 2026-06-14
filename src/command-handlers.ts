@@ -256,7 +256,8 @@ async function renderAsk(
   }
 
   const textParts: string[] = [];
-  const toolEvents: string[] = [];
+  let toolStarts = 0;
+  let toolFailures = 0;
   let usage: { inputTokens?: number; cachedInputTokens?: number; outputTokens?: number } | undefined;
 
   try {
@@ -267,8 +268,14 @@ async function renderAsk(
       },
       {
         onTextDelta: (delta) => textParts.push(delta),
-        onToolStart: (toolName, toolCallId) => toolEvents.push(`${toolName} started (${toolCallId})`),
-        onToolEnd: (toolCallId, isError) => toolEvents.push(`${toolCallId} ${isError ? "failed" : "finished"}`),
+        onToolStart: () => {
+          toolStarts += 1;
+        },
+        onToolEnd: (_toolCallId, isError) => {
+          if (isError) {
+            toolFailures += 1;
+          }
+        },
         onTurnComplete: (nextUsage) => {
           usage = nextUsage;
         },
@@ -284,8 +291,8 @@ async function renderAsk(
     truncateDiscordMessage(answer, 1_500),
   ];
 
-  if (toolEvents.length > 0) {
-    lines.push(`Tools: ${truncateDiscordMessage(toolEvents.join("; "), 250)}`);
+  if (toolStarts > 0) {
+    lines.push(`Tools: ${toolStarts} tool event${toolStarts === 1 ? "" : "s"}, ${toolFailures} failed`);
   }
 
   if (usage) {

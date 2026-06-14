@@ -242,8 +242,38 @@ describe("handleBridgeCommand", () => {
     ]);
     expect(response.content).toContain("Codex response");
     expect(response.content).toContain("Rendben, folytatom.");
-    expect(response.content).toContain("Tools: shell_command started (tool-1); tool-1 finished");
+    expect(response.content).toContain("Tools: 1 tool event, 0 failed");
     expect(response.content).toContain("Tokens: in 10, cached 2, out 5");
+  });
+
+  it("does not expose raw worker command lines in /ask responses", async () => {
+    const sessions = new SessionRegistry();
+    const config = loadConfig(env);
+    await handleBridgeCommand({ ...baseInput, commandName: "new" }, {
+      config,
+      sessions,
+      createWorkerClient: () => createMockWorker(),
+    });
+
+    const response = await handleBridgeCommand({
+      ...baseInput,
+      commandName: "ask",
+      options: { prompt: "Státusz?" },
+    }, {
+      config,
+      sessions,
+      createWorkerClient: () => createMockWorker({
+        prompt: async (_sessionId, _input, callbacks) => {
+          callbacks?.onToolStart?.("\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"git status --short\"", "tool-1");
+          callbacks?.onToolEnd?.("tool-1", false);
+          callbacks?.onTextDelta?.("Kész.");
+        },
+      }),
+    });
+
+    expect(response.content).toContain("Tools: 1 tool event, 0 failed");
+    expect(response.content).not.toContain("PowerShell");
+    expect(response.content).not.toContain("git status");
   });
 
   it("renders /doctor with worker health from the injectable client", async () => {
