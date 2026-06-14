@@ -105,3 +105,11 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git diff --check`.
 - Eredmeny: A token rotacio utan az `/ask` vegigment Discord -> bridge -> worker -> Codex CLI -> Discord uton. A bridge most nem jelenit meg nyers PowerShell/Git command line reszleteket a `Tools` sorban, csak tool event es hibaszamot. A suite 34 zold tesztet futtat, typecheck/build sikeres, `ggshield` nem talalt secretet.
 - Nyitott follow-up: Commit/push; helyi bot ujrainditas az uj valaszformazassal; NAS handoff/deploy.
+
+## 2026-06-14 15:25 +02:00
+
+- Cel: `/ask` statuszvalaszok forras-prioritasanak pontosabb iranyitasa.
+- Modositott fajlok: `src/command-handlers.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git diff --check`.
+- Eredmeny: Az `/ask` worker payload kapott egy rovid `policyPreamble` mezot, amely a `docs/STATE.md` aktualis statuszat es kovetkezo lepeseit priorizalja, a regi append-only changelog follow-up sorokat pedig torteneti jegyzetkent kezelteti. A suite 34 zold tesztet futtat, typecheck/build sikeres, `ggshield` nem talalt secretet.
+- Nyitott follow-up: Commit/push; helyi bot ujrainditas az uj preamble-lel; NAS handoff/deploy.

@@ -81,10 +81,11 @@ The planned model is:
   - Tool details are summarized as event and failure counts.
   - Raw PowerShell/Git command strings are not included in the bridge summary.
 - Validation passed after this slice: `npm test` (34 tests), `npm run typecheck`, and `npm run build`.
+- `/ask` prompts now include a short policy preamble telling Codex to prefer `docs/STATE.md` current status and treat older append-only changelog follow-up lines as historical notes.
 
 ## Next steps
 
-1. Restart the local Discord bot after the response-formatting commit and retry `/ask`.
+1. Restart the local Discord bot after the preamble commit and retry a short status `/ask`.
 2. Prepare NAS deployment handoff: copy `discord_nas_bridge/` files to NAS and keep `DISCORD_WORKERS_JSON` pointed at `http://worker-host.example:8787`.
 3. Add incremental Discord message editing/chunking for long streamed `/ask` responses.
 4. Add file-locking or atomic write hardening for the session store if multiple bot processes are ever allowed.

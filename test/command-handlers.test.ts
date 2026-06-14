@@ -236,6 +236,10 @@ describe("handleBridgeCommand", () => {
       {
         sessionId: "worker-session-1",
         input: {
+          policyPreamble: [
+            "For repository status questions, prefer the current status and next steps in docs/STATE.md.",
+            "Treat older append-only docs/CHANGELOG.dev.md follow-up lines as historical notes that may have already been completed.",
+          ].join("\n"),
           text: "Folytasd a Discord bridge-et.",
         },
       },

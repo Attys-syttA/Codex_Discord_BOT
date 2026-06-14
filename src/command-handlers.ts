@@ -264,6 +264,10 @@ async function renderAsk(
     await createClient(deps, resolved.worker).prompt(
       metadata.workerSessionId,
       {
+        policyPreamble: [
+          "For repository status questions, prefer the current status and next steps in docs/STATE.md.",
+          "Treat older append-only docs/CHANGELOG.dev.md follow-up lines as historical notes that may have already been completed.",
+        ].join("\n"),
         text: prompt,
       },
       {
