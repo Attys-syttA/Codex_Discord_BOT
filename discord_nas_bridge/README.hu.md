@@ -48,3 +48,4 @@ Ez a mappa a NAS-on futtatandó Discord bridge csomag helye.
 - A `.env.nas` fájlt soha ne commitold.
 - A `/data/sessions.json` runtime állapot, nem forráskód.
 - A konténer csak a Discord bridge-et indítja újra. A worker PC újraindítása külön, később megtervezendő feladat.
+- A `docker compose config` valós `.env.nas` mellett kiírhatja a tokeneket és shared secre­teket, ezért csak fake/example env-vel használd.

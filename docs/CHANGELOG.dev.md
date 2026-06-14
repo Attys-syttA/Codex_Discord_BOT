@@ -81,3 +81,11 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `docker compose -f discord_nas_bridge/docker-compose.yml config` ideiglenes `.env.nas`-szal; `docker build -f discord_nas_bridge/Dockerfile -t codex-discord-bridge:local .`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git diff --check`.
 - Eredmeny: Letrejott a `discord_nas_bridge/` mappa NAS Dockerfile-lal, compose definicioval, kulon `.env.nas.example` fajllal es `/data` volume-mal. A Discord adapter `clientReady` eventre es `MessageFlags.Ephemeral` hasznalatra lett frissitve. A Node teszt/typecheck/build, a Compose config es a secret scan sikeres; a Docker image build helyi Docker daemon hianyaban nem futott le (`dockerDesktopLinuxEngine` pipe hianyzik).
 - Nyitott follow-up: Commit/push; Docker image build ellenorzese Dockerrel futo gepen vagy NAS-on.
+
+## 2026-06-14 14:39 +02:00
+
+- Cel: Docker daemon ujraellenorzese es a NAS bridge image build validalasa.
+- Modositott fajlok: `discord_nas_bridge/README.hu.md`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `docker version`; `docker build -f discord_nas_bridge/Dockerfile -t codex-discord-bridge:local .`.
+- Eredmeny: Docker Desktop fut, a `codex-discord-bridge:local` image sikeresen felepult. A NAS `.env.nas` helyi, ignore-olt fajl mar `DISCORD_LOGIN=true`, `/data/sessions.json` session store es `WORKER_PC_IP` worker URL placeholder beallitasokat hasznal. Dokumentalva lett, hogy a `docker compose config` valos env mellett tokeneket es shared secretet irhat ki.
+- Nyitott follow-up: `ggshield` scan, `git diff --check`, commit/push; a NAS megosztott mappa jogosultsagainak veglegesitese es NAS oldali deploy.

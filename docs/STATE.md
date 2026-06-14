@@ -67,7 +67,9 @@ The planned model is:
   - NAS env example is separate from local `.env`.
   - Runtime state is mounted under `/data`.
 - Validation passed after this slice: `npm test` (33 tests), `npm run typecheck`, `npm run build`, `docker compose -f discord_nas_bridge/docker-compose.yml config` with temporary example env, and `ggshield secret scan path --recursive --yes --use-gitignore .`.
-- Docker image build was attempted but could not run locally because the Docker daemon was unavailable (`dockerDesktopLinuxEngine` pipe missing).
+- Docker image build was re-run after Docker Desktop startup and completed successfully:
+  - `docker build -f discord_nas_bridge/Dockerfile -t codex-discord-bridge:local .`
+- Warning: `docker compose config` can print real env values, including tokens and shared secrets. Use it only with fake/example env values.
 
 ## Next steps
 
