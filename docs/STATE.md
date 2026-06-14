@@ -4,7 +4,7 @@
 
 - Date: 2026-06-14
 - Repository: `Codex_Discord_BOT`
-- Phase: Discord `/ask` live smoke passed; response formatting hardening in progress
+- Phase: Discord `/ask` live smoke passed; NAS bundle/deploy preparation in progress
 - Runtime code: Gateway client and guild slash command skeleton available, with worker-backed `/new`, `/attach`, `/session`, `/abort`, and `/ask`; runtime session mappings can persist to `.discord-bot-state/sessions.json`
 - Primary direction: separate Discord pilot, not a Telegram rewrite
 
@@ -82,11 +82,20 @@ The planned model is:
   - Raw PowerShell/Git command strings are not included in the bridge summary.
 - Validation passed after this slice: `npm test` (34 tests), `npm run typecheck`, and `npm run build`.
 - `/ask` prompts now include a short policy preamble telling Codex to prefer `docs/STATE.md` current status and treat older append-only changelog follow-up lines as historical notes.
+- Fresh `/new` + `/ask` live smoke passed after the policy preamble update and local bot restart:
+  - A new worker session was created for the Discord forum thread.
+  - `/ask` returned a current repo status answer through Discord.
+  - Tool activity is summarized by event/failure counts instead of raw command lines.
+- NAS Docker scaffold was adjusted for Synology File Station style upload:
+  - `docker-compose.yml` now builds from the uploaded `discord_nas_bridge/` folder itself.
+  - `scripts/prepare-nas-bundle.ps1` generates a local `discord_nas_bridge/app/` deploy bundle from `package*.json`, `tsconfig.json`, and `src/`.
+  - `discord_nas_bridge/.dockerignore` excludes real env files and runtime data from Docker build context.
+  - Local validation passed with `docker build -f discord_nas_bridge/Dockerfile -t codex-discord-bridge:nas-bundle discord_nas_bridge`.
 
 ## Next steps
 
-1. Restart the local Discord bot after the preamble commit and retry a short status `/ask`.
-2. Prepare NAS deployment handoff: copy `discord_nas_bridge/` files to NAS and keep `DISCORD_WORKERS_JSON` pointed at `http://worker-host.example:8787`.
+1. Upload the refreshed `discord_nas_bridge/` folder to the NAS including the generated `app/` subfolder, then run `docker compose up -d --build` from that NAS folder.
+2. Keep NAS `DISCORD_WORKERS_JSON` pointed at `http://worker-host.example:8787` while the worker runs on the home PC.
 3. Add incremental Discord message editing/chunking for long streamed `/ask` responses.
 4. Add file-locking or atomic write hardening for the session store if multiple bot processes are ever allowed.
 5. Add private Discord smoke checklist before treating live behavior as done.
@@ -103,6 +112,7 @@ The planned model is:
 - Runtime session state belongs under `.discord-bot-state/` by default and must not be committed.
 - NAS runtime files belong under `discord_nas_bridge/`; real `discord_nas_bridge/.env.nas` and `discord_nas_bridge/data/` runtime contents must not be committed.
 - Do not run `docker compose config` with a real `.env` or `.env.nas`; it can print secrets to the terminal/log.
+- Before NAS upload, run `scripts/prepare-nas-bundle.ps1`; the generated `discord_nas_bridge/app/` folder is ignored by Git but must be uploaded to the NAS.
 
 ## Discord pilot identifiers
 

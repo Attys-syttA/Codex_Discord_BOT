@@ -113,3 +113,19 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git diff --check`.
 - Eredmeny: Az `/ask` worker payload kapott egy rovid `policyPreamble` mezot, amely a `docs/STATE.md` aktualis statuszat es kovetkezo lepeseit priorizalja, a regi append-only changelog follow-up sorokat pedig torteneti jegyzetkent kezelteti. A suite 34 zold tesztet futtat, typecheck/build sikeres, `ggshield` nem talalt secretet.
 - Nyitott follow-up: Commit/push; helyi bot ujrainditas az uj preamble-lel; NAS handoff/deploy.
+
+## 2026-06-14 15:40 +02:00
+
+- Cel: A friss `/new` + `/ask` live smoke eredmenyenek rogzitese es az elavult restart follow-up eltavolitasa.
+- Modositott fajlok: `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `git status --short --branch`; `git diff --check`; `ggshield secret scan path --recursive --yes --use-gitignore .`.
+- Eredmeny: A helyi bot mar az uj preamble-lel futott, a friss worker session letrejott, es az `/ask` aktualis repo-statuszt adott vissza Discordon. A `docs/STATE.md` kovetkezo lepesei most mar a NAS handoff/deploy iranyba mutatnak.
+- Nyitott follow-up: NAS oldali fajlfeltoltes es kontenerinditas; hosszabb `/ask` valaszok chunking/editing kezelese.
+
+## 2026-06-14 15:58 +02:00
+
+- Cel: A NAS Docker build context javitasa Synology File Stationbol feltoltott onallo mappahoz.
+- Modositott fajlok: `.gitignore`, `discord_nas_bridge/.dockerignore`, `discord_nas_bridge/Dockerfile`, `discord_nas_bridge/docker-compose.yml`, `discord_nas_bridge/README.hu.md`, `scripts/prepare-nas-bundle.ps1`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `.\scripts\prepare-nas-bundle.ps1`; `docker build -f discord_nas_bridge\Dockerfile -t codex-discord-bridge:nas-bundle discord_nas_bridge`; `npm test`; `npm run typecheck`; `npm run build`; `ggshield secret scan path --recursive --yes --use-gitignore .`; `git diff --check`.
+- Eredmeny: A compose build context mar a feltoltott `discord_nas_bridge/` mappa, a Dockerfile pedig az ebben levo generalt `app/` bundle-bol epit. A helyi Docker build sikeres volt, a build context nem tartalmazza a valodi `.env.nas` fajlt. A suite 34 zold tesztet futtat, typecheck/build sikeres, `ggshield` nem talalt secretet.
+- Nyitott follow-up: A friss `discord_nas_bridge/` mappa feltoltese NAS-ra az `app/` almappaval egyutt.

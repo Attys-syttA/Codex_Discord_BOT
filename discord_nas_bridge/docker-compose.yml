@@ -1,8 +1,8 @@
 services:
   codex-discord-bridge:
     build:
-      context: ..
-      dockerfile: discord_nas_bridge/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     image: codex-discord-bridge:local
     container_name: codex-discord-bridge
     restart: unless-stopped

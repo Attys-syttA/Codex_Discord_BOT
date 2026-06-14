@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.nas.example
+
+data
+data/*
+!data/.gitkeep
+
+app/node_modules
+app/dist
+app/coverage
+app/.cache
+app/.turbo
+
+*.log
+*.pid

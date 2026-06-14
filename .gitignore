@@ -10,6 +10,7 @@ coverage/
 .turbo/
 
 .discord-bot-state/
+discord_nas_bridge/app/
 logs/
 *.log
 *.pid
