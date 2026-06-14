@@ -281,8 +281,9 @@ describe("handleBridgeCommand", () => {
     ]);
     expect(response.content).toContain("Codex response");
     expect(response.content).toContain("Rendben, folytatom.");
-    expect(response.content).toContain("Tools: 1 tool event, 0 failed");
+    expect(response.content).toContain("Codex tool calls: 1 event, 0 failed inside Codex");
     expect(response.content).toContain("Tokens: in 10, cached 2, out 5");
+    expect(response.followUpContents).toEqual([]);
   });
 
   it("does not expose raw worker command lines in /ask responses", async () => {
@@ -310,9 +311,42 @@ describe("handleBridgeCommand", () => {
       }),
     });
 
-    expect(response.content).toContain("Tools: 1 tool event, 0 failed");
+    expect(response.content).toContain("Codex tool calls: 1 event, 0 failed inside Codex");
     expect(response.content).not.toContain("PowerShell");
     expect(response.content).not.toContain("git status");
+  });
+
+  it("splits long /ask responses into follow-up message chunks", async () => {
+    const sessions = new SessionRegistry();
+    const config = loadConfig(env);
+    await handleBridgeCommand({ ...baseInput, commandName: "new" }, {
+      config,
+      sessions,
+      createWorkerClient: () => createMockWorker(),
+    });
+
+    const longAnswer = `${"0123456789".repeat(210)}\n${"abcdef".repeat(260)}`;
+    const response = await handleBridgeCommand({
+      ...baseInput,
+      commandName: "ask",
+      options: { prompt: "Adj hosszú státuszt." },
+    }, {
+      config,
+      sessions,
+      createWorkerClient: () => createMockWorker({
+        prompt: async (_sessionId, _input, callbacks) => {
+          callbacks?.onTextDelta?.(longAnswer);
+          callbacks?.onTurnComplete?.({ inputTokens: 1, cachedInputTokens: 0, outputTokens: 2 });
+        },
+      }),
+    });
+
+    const allParts = [response.content, ...response.followUpContents];
+    expect(allParts.length).toBeGreaterThan(1);
+    expect(allParts.every((part) => part.length <= 1_900)).toBe(true);
+    expect(allParts.join("")).toContain("0123456789".repeat(50));
+    expect(allParts.join("")).toContain("Tokens: in 1, cached 0, out 2");
+    expect(allParts.join("")).not.toContain("[truncated]");
   });
 
   it("renders /doctor with worker health from the injectable client", async () => {

@@ -209,3 +209,27 @@ Append-only development log for `Codex_Discord_BOT`.
 - Futtatott parancsok: `git status --short --branch`; `rg` a terv/state/changelog aktualis nyitott pontjaira; terv es state atnezese; `git diff --check`; `npm run check:workspace`; `ggshield secret scan path --recursive --yes --use-gitignore .`.
 - Eredmeny: A friss NAS smoke szerint az unmapped `codex_discord_bot` forum thread `/doctor` parancsa mar automatikusan `<CODEX_WORKS_HOME>\codex_discord_bot` workspace-re mapel, a NAS-hosted bot valaszol, es a worker health `remote-worker`. A fejlesztesi dontes: eloszor stabilizacios checkpoint ellenorzes/commit/push, utana hosszu `/ask` valaszok Discord message editing/chunking kezelese. Plain message promptok, Message Content Intent, automatikus forumletrehozas, Wake-on-LAN es multi-worker UX kesobbre halasztva.
 - Nyitott follow-up: Commit/push; ezutan `/ask` chunking/editing implementacio.
+
+## 2026-06-14 19:14 +02:00
+
+- Cel: Hosszu `/ask` valaszok Discord chunking kezelese.
+- Modositott fajlok: `src/command-handlers.ts`, `src/discord-bot.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`; generalt, nem commitolt deploy bundle: `discord_nas_bridge/app/`.
+- Futtatott parancsok: `npm test -- command-handlers`; `npm run typecheck`; `npm test`; `npm run build`; `npm run nas:bundle:prepare`; `git diff --check`; `docker build -f discord_nas_bridge\Dockerfile -t codex-discord-bridge:nas-bundle discord_nas_bridge`; `npm run check:workspace`.
+- Eredmeny: A bridge parancsvalaszai most mar tobb Discord uzenetreszt tudnak visszaadni. A `/ask` valasz hosszu Codex szoveget Discord-safe chunkokra bont, az elso resz az eredeti deferred interaction reply editje, a tovabbi reszek ephemeral follow-up uzenetek. A hosszu valasz teszt azt ellenorzi, hogy nincs `[truncated]`, minden chunk legfeljebb 1900 karakter, es a token osszegzes megmarad. A teszt/typecheck/build es a helyi NAS Docker build zold.
+- Nyitott follow-up: Friss NAS feltoltes/rebuild/restart utan hosszu `/ask` live smoke; siker utan privat Discord smoke checklist.
+
+## 2026-06-14 19:40 +02:00
+
+- Cel: `/ask` tool summary sor pontosabb, nem felreertheto megjelenitese.
+- Modositott fajlok: `src/command-handlers.ts`, `src/discord-bot.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`; generalt, nem commitolt deploy bundle: `discord_nas_bridge/app/`.
+- Futtatott parancsok: friss NAS log export atnezese; `npm test -- command-handlers`; `npm run typecheck`; `npm run build`; `npm run nas:bundle:prepare`; `git diff --check`; `npm run check:workspace`.
+- Eredmeny: A Discord valaszban a generic `Tools` sor `Codex tool calls` szovegre valtott, hogy egy belso Codex tool hiba ne tunjon Discord/NAS bridge hibanak. A bridge most tartalom nelkul naplozza a kikuldott valaszreszek szamat: `Discord response sent ... parts=N`, igy a NAS logbol ellenorizheto a chunking.
+- Nyitott follow-up: Friss NAS feltoltes/rebuild/restart es uj hosszu `/ask` smoke.
+
+## 2026-06-14 19:50 +02:00
+
+- Cel: Tartosan lathato Discord valaszok beallitasa a projekt thread naplozashoz.
+- Modositott fajlok: `.env.example`, `discord_nas_bridge/.env.nas.example`, `src/config.ts`, `src/discord-bot.ts`, `test/config.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`; generalt, nem commitolt deploy bundle: `discord_nas_bridge/app/`.
+- Futtatott parancsok: `npm run typecheck`; `npm test -- config command-handlers`.
+- Eredmeny: A korabban eltunonek tuno valaszok oka az ephemeral Discord interaction response modell volt: ezek nem rendes, tartos csatornauzenetek. Bekerult a `DISCORD_EPHEMERAL_RESPONSES` kapcsolo. Alapertelmezesben `true`, a NAS example viszont `false`, hogy a privat szerveren a bot valaszai tartos, desktopon es mobilon is lathato thread uzenetek legyenek.
+- Nyitott follow-up: Friss NAS `.env.nas` ertek: `DISCORD_EPHEMERAL_RESPONSES=false`, majd NAS bundle feltoltes/rebuild/restart es uj `/ask` smoke.

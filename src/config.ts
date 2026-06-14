@@ -24,6 +24,7 @@ export interface DiscordBridgeConfig {
   workers: WorkerTarget[];
   defaultWorkerId: string;
   autoWorkspaceRoot?: string;
+  ephemeralResponses: boolean;
   workerTimeoutMs: number;
   sessionStorePath: string;
 }
@@ -38,6 +39,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): DiscordBridgeC
   const workers = parseWorkers(requireEnv(env, "DISCORD_WORKERS_JSON"));
   const defaultWorkerId = parseDefaultWorkerId(optionalEnv(env, "DISCORD_DEFAULT_WORKER_ID"), workers);
   const autoWorkspaceRoot = optionalEnv(env, "DISCORD_AUTO_WORKSPACE_ROOT");
+  const ephemeralResponses = parseBoolean(optionalEnv(env, "DISCORD_EPHEMERAL_RESPONSES"), true, "DISCORD_EPHEMERAL_RESPONSES");
   const workerTimeoutMs = parsePositiveInteger(
     optionalEnv(env, "DISCORD_WORKER_TIMEOUT_MS"),
     120_000,
@@ -65,6 +67,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): DiscordBridgeC
     workers,
     defaultWorkerId,
     ...(autoWorkspaceRoot ? { autoWorkspaceRoot } : {}),
+    ephemeralResponses,
     workerTimeoutMs,
     sessionStorePath,
   };
@@ -184,6 +187,22 @@ function parsePositiveInteger(raw: string | undefined, defaultValue: number, nam
     throw new Error(`Invalid ${name}: expected a positive integer`);
   }
   return parsed;
+}
+
+function parseBoolean(raw: string | undefined, defaultValue: boolean, name: string): boolean {
+  if (!raw) {
+    return defaultValue;
+  }
+
+  const normalized = raw.toLowerCase();
+  if (["true", "1", "yes", "on"].includes(normalized)) {
+    return true;
+  }
+  if (["false", "0", "no", "off"].includes(normalized)) {
+    return false;
+  }
+
+  throw new Error(`Invalid ${name}: expected true or false`);
 }
 
 function parseJsonArray(raw: string, name: string): unknown[] {

@@ -3,6 +3,8 @@ import {
   ChatInputCommandInteraction,
   Client,
   type Channel,
+  type InteractionDeferReplyOptions,
+  type InteractionReplyOptions,
   Events,
   GatewayIntentBits,
   MessageFlags,
@@ -76,7 +78,7 @@ async function handleChatInputInteraction(
     console.log(
       `Discord command received: command=${interaction.commandName} guild=${guildId} channel=${channel.id} user=${interaction.user.id}`,
     );
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interaction.deferReply(responseVisibility(config));
     console.log(
       `Discord command deferred: command=${interaction.commandName} guild=${guildId} channel=${channel.id} user=${interaction.user.id}`,
     );
@@ -100,7 +102,10 @@ async function handleChatInputInteraction(
       { config, sessions },
     );
 
-    await interaction.editReply({ content: response.content });
+    const sentParts = await sendBridgeResponse(interaction, response.content, response.followUpContents, config);
+    console.log(
+      `Discord response sent: command=${interaction.commandName} guild=${guildId} channel=${channel.id} user=${interaction.user.id} parts=${sentParts}`,
+    );
     console.log(
       `Discord command completed: command=${interaction.commandName} guild=${guildId} channel=${channel.id} user=${interaction.user.id}`,
     );
@@ -172,6 +177,28 @@ async function editReplySafely(
   } catch (error) {
     logInteractionResponseFailure(interaction, "editReply", error);
   }
+}
+
+async function sendBridgeResponse(
+  interaction: ChatInputCommandInteraction,
+  content: string,
+  followUpContents: string[],
+  config: DiscordBridgeConfig,
+): Promise<number> {
+  await interaction.editReply({ content });
+
+  for (const followUpContent of followUpContents) {
+    await interaction.followUp({
+      content: followUpContent,
+      ...responseVisibility(config),
+    });
+  }
+
+  return 1 + followUpContents.length;
+}
+
+function responseVisibility(config: DiscordBridgeConfig): Pick<InteractionDeferReplyOptions, "flags"> & Pick<InteractionReplyOptions, "flags"> {
+  return config.ephemeralResponses ? { flags: MessageFlags.Ephemeral } : {};
 }
 
 function logInteractionResponseFailure(

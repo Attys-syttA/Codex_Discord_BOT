@@ -142,13 +142,36 @@ The planned model is:
   - next implement incremental Discord message editing/chunking for longer `/ask` responses,
   - then add a private Discord smoke checklist and session-store write hardening.
   - Defer plain message prompts, Message Content Intent, automatic forum creation, Wake-on-LAN, and multi-worker UX until after the checkpoint.
+- Long `/ask` response chunking was added:
+  - command handlers can now return multiple Discord response parts,
+  - the first part edits the deferred interaction reply,
+  - additional parts are sent as ephemeral follow-up messages,
+  - long Codex text is split into Discord-safe chunks instead of being replaced by `[truncated]`.
+- The `/ask` usage summary was clarified:
+  - Discord now says `Codex tool calls` instead of generic `Tools`,
+  - a failed count means an internal Codex tool call failed during the worker turn, not that the Discord bridge failed,
+  - the NAS log records non-secret response delivery metadata as `Discord response sent ... parts=N`.
+- Discord response visibility is now configurable:
+  - `DISCORD_EPHEMERAL_RESPONSES=true` keeps private "only you can see this" responses,
+  - `DISCORD_EPHEMERAL_RESPONSES=false` sends normal persistent thread messages,
+  - the NAS example uses persistent responses because project work needs to be visible across desktop/mobile clients and after reopening Discord.
+- Validation passed after this slice:
+  - `npm test -- command-handlers`,
+  - `npm run typecheck`,
+  - `npm test`,
+  - `npm run build`,
+  - `npm run nas:bundle:prepare`,
+  - `git diff --check`,
+  - `docker build -f discord_nas_bridge\Dockerfile -t codex-discord-bridge:nas-bundle discord_nas_bridge`,
+  - `npm run check:workspace`.
 
 ## Next steps
 
-1. Commit and push the stabilization checkpoint.
-2. Implement incremental Discord message editing/chunking for long `/ask` responses.
-3. Add a private Discord smoke checklist covering `/doctor`, `/new`, `/session`, `/ask`, `/abort`, and unmapped forum auto mapping.
-4. Add file-locking or atomic write hardening for the session store if multiple bot processes are ever allowed.
+1. Set real NAS `.env.nas` to `DISCORD_EPHEMERAL_RESPONSES=false`.
+2. Upload the refreshed `discord_nas_bridge/` folder including regenerated `app/` to the NAS and rebuild/restart the container.
+3. Run a long `/ask` live smoke and confirm multiple persistent Discord messages appear without `[truncated]`.
+4. Add a private Discord smoke checklist covering `/doctor`, `/new`, `/session`, `/ask`, `/abort`, and unmapped forum auto mapping.
+5. Add file-locking or atomic write hardening for the session store if multiple bot processes are ever allowed.
 
 ## Operational notes
 

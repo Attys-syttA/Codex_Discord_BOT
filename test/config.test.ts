@@ -39,6 +39,7 @@ describe("loadConfig", () => {
       workerId: "otthon",
     });
     expect(config.autoWorkspaceRoot).toBeUndefined();
+    expect(config.ephemeralResponses).toBe(true);
     expect(config.workers[0]).toMatchObject({
       id: "otthon",
       label: "Otthon worker",
@@ -63,6 +64,21 @@ describe("loadConfig", () => {
     });
 
     expect(config.autoWorkspaceRoot).toBe("E:\\codex_works");
+  });
+
+  it("accepts persistent non-ephemeral Discord responses", () => {
+    const config = loadConfig({
+      ...baseEnv,
+      DISCORD_EPHEMERAL_RESPONSES: "false",
+    });
+
+    expect(config.ephemeralResponses).toBe(false);
+  });
+
+  it("rejects invalid Discord response visibility values", () => {
+    expect(() => loadConfig({ ...baseEnv, DISCORD_EPHEMERAL_RESPONSES: "sometimes" })).toThrow(
+      "Invalid DISCORD_EPHEMERAL_RESPONSES",
+    );
   });
 
   it("accepts optional role allowlists", () => {

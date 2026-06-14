@@ -22,6 +22,7 @@ export interface BridgeCommandInput {
 
 export interface BridgeCommandResponse {
   content: string;
+  followUpContents: string[];
   ephemeral: boolean;
 }
 
@@ -72,7 +73,7 @@ export async function handleBridgeCommand(
     case "attach":
       return response(await renderAttach(input, deps, resolved));
     case "ask":
-      return response(await renderAsk(input, deps, resolved));
+      return responseParts(await renderAsk(input, deps, resolved));
     case "handoff":
       return response(renderHandoff(deps.sessions.get(resolved.contextKey), resolved));
     case "abort":
@@ -277,15 +278,15 @@ async function renderAsk(
   input: BridgeCommandInput,
   deps: BridgeCommandDeps,
   resolved: ResolvedContext,
-): Promise<string> {
+): Promise<string[]> {
   const prompt = input.options?.prompt?.trim();
   if (!prompt) {
-    return "Missing required option: prompt";
+    return ["Missing required option: prompt"];
   }
 
   const metadata = deps.sessions.get(resolved.contextKey);
   if (!metadata?.workerSessionId) {
-    return "No active worker session is recorded for this context yet. Use /new or /attach first.";
+    return ["No active worker session is recorded for this context yet. Use /new or /attach first."];
   }
 
   const textParts: string[] = [];
@@ -319,24 +320,26 @@ async function renderAsk(
       },
     );
   } catch (error) {
-    return `Codex prompt failed: ${error instanceof Error ? error.message : String(error)}`;
+    return [`Codex prompt failed: ${error instanceof Error ? error.message : String(error)}`];
   }
 
   const answer = textParts.join("").trim() || "(no text returned)";
   const lines = [
     "Codex response",
-    truncateDiscordMessage(answer, 1_500),
+    answer,
   ];
 
   if (toolStarts > 0) {
-    lines.push(`Tools: ${toolStarts} tool event${toolStarts === 1 ? "" : "s"}, ${toolFailures} failed`);
+    lines.push(
+      `Codex tool calls: ${toolStarts} event${toolStarts === 1 ? "" : "s"}, ${toolFailures} failed inside Codex`,
+    );
   }
 
   if (usage) {
     lines.push(`Tokens: in ${usage.inputTokens ?? "?"}, cached ${usage.cachedInputTokens ?? "?"}, out ${usage.outputTokens ?? "?"}`);
   }
 
-  return truncateDiscordMessage(lines.join("\n"), 1_950);
+  return splitDiscordMessages(lines.join("\n"));
 }
 
 function renderHandoff(metadata: SessionMetadata | undefined, resolved: ResolvedContext): string {
@@ -369,7 +372,14 @@ async function renderAbort(deps: BridgeCommandDeps, resolved: ResolvedContext): 
 }
 
 function response(content: string): BridgeCommandResponse {
-  return { content, ephemeral: true };
+  return { content, followUpContents: [], ephemeral: true };
+}
+
+function responseParts(parts: string[]): BridgeCommandResponse {
+  const normalizedParts = parts.length > 0 ? parts : ["(empty response)"];
+  const content = normalizedParts[0] ?? "(empty response)";
+  const followUpContents = normalizedParts.slice(1);
+  return { content, followUpContents, ephemeral: true };
 }
 
 async function refreshSessionInfo(
@@ -410,4 +420,25 @@ function truncateDiscordMessage(value: string, maxLength: number): string {
   }
 
   return `${value.slice(0, Math.max(0, maxLength - 14)).trimEnd()}\n[truncated]`;
+}
+
+function splitDiscordMessages(value: string, maxLength = 1_900): string[] {
+  if (value.length <= maxLength) {
+    return [value];
+  }
+
+  const chunks: string[] = [];
+  let remaining = value;
+  while (remaining.length > maxLength) {
+    const preferredBreak = remaining.lastIndexOf("\n", maxLength);
+    const splitAt = preferredBreak > maxLength * 0.5 ? preferredBreak : maxLength;
+    chunks.push(remaining.slice(0, splitAt).trimEnd());
+    remaining = remaining.slice(splitAt).trimStart();
+  }
+
+  if (remaining) {
+    chunks.push(remaining);
+  }
+
+  return chunks;
 }
