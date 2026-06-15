@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { loadConfig } from "../src/config.js";
 
+const CONFIG_DIR = "C:\\codex_works\\Codex_Discord_BOT";
+const WORKSPACE_ROOT = "C:\\codex_works";
+
 const baseEnv = {
   DISCORD_TOKEN: "TEST_ONLY_DISCORD_BOT_TOKEN",
   DISCORD_APPLICATION_ID: "100000000000000010",
@@ -10,25 +13,27 @@ const baseEnv = {
   DISCORD_CHANNEL_MAPPINGS_JSON: JSON.stringify([
     {
       channelId: "100000000000000101",
-      workspace: "E:\\codex_works\\Codex_Discord_BOT",
-      workerId: "otthon",
+      workspace: "Codex_Discord_BOT",
+      workerId: "worker-home",
     },
   ]),
   DISCORD_WORKERS_JSON: JSON.stringify([
     {
-      id: "otthon",
-      label: "Otthon worker",
+      id: "worker-home",
+      label: "Home worker",
       baseUrl: "http://127.0.0.1:8787",
-      sharedSecret: "TEST_ONLY_WORKER_SHARED_SECRET",
+      sharedSecretEnv: "DISCORD_WORKER_SHARED_SECRET_HOME",
+      workspaceRoot: "..",
     },
   ]),
-  DISCORD_DEFAULT_WORKER_ID: "otthon",
+  DISCORD_WORKER_SHARED_SECRET_HOME: "TEST_ONLY_WORKER_SHARED_SECRET",
+  DISCORD_DEFAULT_WORKER_ID: "worker-home",
   DISCORD_WORKER_TIMEOUT_MS: "120000",
 };
 
 describe("loadConfig", () => {
-  it("accepts the current non-secret Discord pilot identifiers", () => {
-    const config = loadConfig(baseEnv);
+  it("accepts synthetic Discord pilot identifiers", () => {
+    const config = loadConfig(baseEnv, { configDir: CONFIG_DIR });
 
     expect(config.applicationId).toBe("100000000000000010");
     expect(config.guildId).toBe("100000000000000001");
@@ -36,14 +41,15 @@ describe("loadConfig", () => {
     expect(config.allowedRoleIds).toEqual([]);
     expect(config.channelMappings[0]).toMatchObject({
       channelId: "100000000000000101",
-      workerId: "otthon",
+      workspace: CONFIG_DIR,
+      workerId: "worker-home",
     });
     expect(config.autoWorkspaceRoot).toBeUndefined();
     expect(config.autoWorkspaceAliases.size).toBe(0);
     expect(config.ephemeralResponses).toBe(true);
     expect(config.workers[0]).toMatchObject({
-      id: "otthon",
-      label: "Otthon worker",
+      id: "worker-home",
+      label: "Home worker",
       baseUrl: "http://127.0.0.1:8787",
     });
     expect(config.sessionStorePath).toBe(".discord-bot-state/sessions.json");
@@ -53,7 +59,7 @@ describe("loadConfig", () => {
     const config = loadConfig({
       ...baseEnv,
       DISCORD_SESSION_STORE_PATH: "runtime/sessions.json",
-    });
+    }, { configDir: CONFIG_DIR });
 
     expect(config.sessionStorePath).toBe("runtime/sessions.json");
   });
@@ -61,10 +67,42 @@ describe("loadConfig", () => {
   it("accepts an optional auto workspace root", () => {
     const config = loadConfig({
       ...baseEnv,
-      DISCORD_AUTO_WORKSPACE_ROOT: "E:\\codex_works",
-    });
+      DISCORD_AUTO_WORKSPACE_ROOT: "..",
+    }, { configDir: CONFIG_DIR });
 
-    expect(config.autoWorkspaceRoot).toBe("E:\\codex_works");
+    expect(config.autoWorkspaceRoot).toBe(WORKSPACE_ROOT);
+  });
+
+  it("resolves relative workspace mappings against the worker workspace root", () => {
+    const config = loadConfig({
+      ...baseEnv,
+      DISCORD_CHANNEL_MAPPINGS_JSON: JSON.stringify([
+        { channelId: "100000000000000101", workspace: "email_header_analyzer", workerId: "worker-home" },
+      ]),
+    }, { configDir: CONFIG_DIR });
+
+    expect(config.channelMappings[0]?.workspace).toBe("C:\\codex_works\\email_header_analyzer");
+  });
+
+  it("stores per-worker workspace roots", () => {
+    const config = loadConfig(baseEnv, { configDir: CONFIG_DIR });
+
+    expect(config.workers[0]?.workspaceRoot).toBe(WORKSPACE_ROOT);
+  });
+
+  it("loads worker shared secrets from a referenced env variable", () => {
+    const config = loadConfig(baseEnv, { configDir: CONFIG_DIR });
+
+    expect(config.workers[0]?.sharedSecret).toBe("TEST_ONLY_WORKER_SHARED_SECRET");
+  });
+
+  it("rejects missing referenced worker shared secret env variables", () => {
+    expect(() => loadConfig({
+      ...baseEnv,
+      DISCORD_WORKER_SHARED_SECRET_HOME: undefined,
+    }, { configDir: CONFIG_DIR })).toThrow(
+      "Missing required environment variable: DISCORD_WORKER_SHARED_SECRET_HOME",
+    );
   });
 
   it("accepts auto workspace aliases", () => {
@@ -73,13 +111,13 @@ describe("loadConfig", () => {
       DISCORD_AUTO_WORKSPACE_ALIASES_JSON: JSON.stringify({
         codex_discord_bot: "Codex_Discord_BOT",
       }),
-    });
+    }, { configDir: CONFIG_DIR });
 
     expect(config.autoWorkspaceAliases.get("codex_discord_bot")).toBe("Codex_Discord_BOT");
   });
 
   it("rejects invalid auto workspace alias JSON", () => {
-    expect(() => loadConfig({ ...baseEnv, DISCORD_AUTO_WORKSPACE_ALIASES_JSON: "[]" })).toThrow(
+    expect(() => loadConfig({ ...baseEnv, DISCORD_AUTO_WORKSPACE_ALIASES_JSON: "[]" }, { configDir: CONFIG_DIR })).toThrow(
       "Invalid DISCORD_AUTO_WORKSPACE_ALIASES_JSON",
     );
   });
@@ -88,13 +126,13 @@ describe("loadConfig", () => {
     const config = loadConfig({
       ...baseEnv,
       DISCORD_EPHEMERAL_RESPONSES: "false",
-    });
+    }, { configDir: CONFIG_DIR });
 
     expect(config.ephemeralResponses).toBe(false);
   });
 
   it("rejects invalid Discord response visibility values", () => {
-    expect(() => loadConfig({ ...baseEnv, DISCORD_EPHEMERAL_RESPONSES: "sometimes" })).toThrow(
+    expect(() => loadConfig({ ...baseEnv, DISCORD_EPHEMERAL_RESPONSES: "sometimes" }, { configDir: CONFIG_DIR })).toThrow(
       "Invalid DISCORD_EPHEMERAL_RESPONSES",
     );
   });
@@ -102,34 +140,34 @@ describe("loadConfig", () => {
   it("accepts optional role allowlists", () => {
     const config = loadConfig({
       ...baseEnv,
-      DISCORD_ALLOWED_ROLE_IDS: "1515659000000000000,1515659000000000001",
-    });
+      DISCORD_ALLOWED_ROLE_IDS: "100000000000000301,100000000000000302",
+    }, { configDir: CONFIG_DIR });
 
-    expect(config.allowedRoleIdSet.has("1515659000000000000")).toBe(true);
-    expect(config.allowedRoleIdSet.has("1515659000000000001")).toBe(true);
+    expect(config.allowedRoleIdSet.has("100000000000000301")).toBe(true);
+    expect(config.allowedRoleIdSet.has("100000000000000302")).toBe(true);
   });
 
   it("rejects an empty allowed user list", () => {
-    expect(() => loadConfig({ ...baseEnv, DISCORD_ALLOWED_USER_IDS: " " })).toThrow(
+    expect(() => loadConfig({ ...baseEnv, DISCORD_ALLOWED_USER_IDS: " " }, { configDir: CONFIG_DIR })).toThrow(
       "Missing required environment variable: DISCORD_ALLOWED_USER_IDS",
     );
   });
 
   it("rejects invalid Discord snowflakes", () => {
-    expect(() => loadConfig({ ...baseEnv, DISCORD_GUILD_ID: "not-a-snowflake" })).toThrow(
+    expect(() => loadConfig({ ...baseEnv, DISCORD_GUILD_ID: "not-a-snowflake" }, { configDir: CONFIG_DIR })).toThrow(
       "Invalid Discord snowflake",
     );
   });
 
   it("rejects invalid channel mapping JSON", () => {
-    expect(() => loadConfig({ ...baseEnv, DISCORD_CHANNEL_MAPPINGS_JSON: "{" })).toThrow(
+    expect(() => loadConfig({ ...baseEnv, DISCORD_CHANNEL_MAPPINGS_JSON: "{" }, { configDir: CONFIG_DIR })).toThrow(
       "Invalid DISCORD_CHANNEL_MAPPINGS_JSON",
     );
   });
 
   it("rejects an unknown default worker", () => {
-    expect(() => loadConfig({ ...baseEnv, DISCORD_DEFAULT_WORKER_ID: "munkahely" })).toThrow(
-      "Unknown DISCORD_DEFAULT_WORKER_ID: munkahely",
+    expect(() => loadConfig({ ...baseEnv, DISCORD_DEFAULT_WORKER_ID: "worker-office" }, { configDir: CONFIG_DIR })).toThrow(
+      "Unknown DISCORD_DEFAULT_WORKER_ID: worker-office",
     );
   });
 
@@ -137,18 +175,19 @@ describe("loadConfig", () => {
     const config = loadConfig({
       ...baseEnv,
       DISCORD_CHANNEL_MAPPINGS_JSON: JSON.stringify([
-        { channelId: "100000000000000101", workspace: "E:\\codex_works\\Codex_Discord_BOT", workerId: "otthon" },
-        { channelId: "1515657000000000000", workspace: "E:\\codex_works\\email-header-analyzer", workerId: "munkahely" },
+        { channelId: "100000000000000101", workspace: "Codex_Discord_BOT", workerId: "worker-home" },
+        { channelId: "100000000000000102", workspace: "email-header-analyzer", workerId: "worker-office" },
       ]),
       DISCORD_WORKERS_JSON: JSON.stringify([
-        { id: "otthon", label: "Otthon worker", baseUrl: "http://127.0.0.1:8787" },
-        { id: "munkahely", label: "Munkahely worker", baseUrl: "http://127.0.0.1:8788" },
+        { id: "worker-home", label: "Home worker", baseUrl: "http://127.0.0.1:8787", workspaceRoot: "E:\\codex_works" },
+        { id: "worker-office", label: "Office worker", baseUrl: "http://127.0.0.1:8788", workspaceRoot: "D:\\codex_works" },
       ]),
-      DISCORD_DEFAULT_WORKER_ID: "munkahely",
-    });
+      DISCORD_DEFAULT_WORKER_ID: "worker-office",
+    }, { configDir: CONFIG_DIR });
 
     expect(config.workers).toHaveLength(2);
     expect(config.channelMappings).toHaveLength(2);
-    expect(config.defaultWorkerId).toBe("munkahely");
+    expect(config.defaultWorkerId).toBe("worker-office");
+    expect(config.channelMappings[1]?.workspace).toBe("D:\\codex_works\\email-header-analyzer");
   });
 });

@@ -1,76 +1,95 @@
-# Discord NAS bridge futtatás
+# Discord NAS bridge futtatas
 
-Ez a mappa a NAS-on futtatandó Discord bridge csomag helye.
+Ez a mappa a NAS-on futtatando Discord bridge csomag helye.
 
 ## Szerep
 
-- A NAS konténer tartja életben a Discord botot.
-- A worker PC végzi a Codex, Git és filesystem műveleteket.
-- A NAS bridge nem tartalmazhat Codex authot, GitHub authot vagy repo írási jogosultságot.
+- A NAS kontener tartja eletben a Discord botot.
+- A worker PC vegzi a Codex, Git es filesystem muveleteket.
+- A NAS bridge nem tartalmazhat Codex authot, GitHub authot vagy repo-irasi jogosultsagot.
 
-## Fájlok
+## Fajlok
 
-- `Dockerfile`: többfázisú Node.js 20 build és production runtime.
-- `docker-compose.yml`: NAS futtatás `restart: unless-stopped` móddal.
-- `.env.nas.example`: minta konfiguráció fake értékekkel.
-- `.dockerignore`: kizárja a valódi `.env.nas` fájlt a Docker build contextből.
-- `app/`: generált build bundle, amelyet feltöltés előtt a `scripts/prepare-nas-bundle.ps1` készít el.
-- `data/`: helyi runtime állapot, például `sessions.json`.
+- `Dockerfile`: tobbfazisu Node.js 20 build es production runtime
+- `docker-compose.yml`: NAS futtatas `restart: unless-stopped` moddal
+- `.env.nas.example`: minta konfiguracio fake ertekekkel
+- `.dockerignore`: kizarja a valodi `.env.nas` fajlt a Docker build contextbol
+- `app/`: generalt build bundle, amelyet feltoltes elott a `scripts/prepare-nas-bundle.ps1` keszit el
+- `data/`: helyi runtime allapot, peldaul `sessions.json`
 
-## Első indítás NAS-on
+## Elso inditas NAS-on
 
-1. A Windows gépen, a repo gyökeréből készíts friss NAS bundle-t:
+1. A Windows gepen, a repo gyokerebol keszits friss NAS bundle-t:
 
-   ```powershell
-   .\scripts\prepare-nas-bundle.ps1
-   ```
+```powershell
+.\scripts\prepare-nas-bundle.ps1
+```
 
-2. Töltsd fel a teljes `discord_nas_bridge` mappát a NAS megosztott mappájába. Fontos, hogy az `app/` almappa is felkerüljön.
-3. A NAS-on, a feltöltött mappában készíts saját env fájlt:
+2. Toltsd fel a teljes `discord_nas_bridge` mappat a NAS megosztott mappajaba. Fontos, hogy az `app/` almappa is felkeruljon.
+3. A NAS-on, a feltoltott mappaban keszits sajat env fajlt:
 
-   ```sh
-   cp .env.nas.example .env.nas
-   ```
+```sh
+cp .env.nas.example .env.nas
+```
 
-4. Töltsd ki a valódi értékeket a `.env.nas` fájlban.
-5. A worker URL a NAS nézőpontjából legyen elérhető, például:
+4. Toltsd ki a valodi ertekeket a `.env.nas` fajlban.
+5. A worker URL a NAS nezopontjabol legyen elerheto, peldaul:
 
-   ```env
-   DISCORD_WORKERS_JSON=[{"id":"otthon","label":"Otthon worker","baseUrl":"http://worker-home.example:8787","sharedSecret":"..."}]
-   ```
+```env
+DISCORD_WORKERS_JSON=[{"id":"worker-home","label":"Otthoni worker","baseUrl":"http://worker-home.lan:8787","sharedSecretEnv":"DISCORD_WORKER_SHARED_SECRET_HOME","workspaceRoot":"E:\\codex_works"}]
+```
 
-   Ha új Discord fórumokat szeretnél automatikusan repohoz kötni, állítsd be a worker gép workspace rootját:
+6. Ha uj Discord forumokat szeretnel automatikusan repohoz kotni, add meg az alias tablazatot:
 
-   ```env
-   DISCORD_AUTO_WORKSPACE_ROOT=E:\codex_works
-   ```
+```env
+DISCORD_AUTO_WORKSPACE_ALIASES_JSON={"codex_discord_bot":"Codex_Discord_BOT"}
+```
 
-   Ilyenkor egy nem kézzel mapelt fórum neve lesz a repo/projekt mappanév. Például a `codex_discord_bot` fórum a worker felé `<CODEX_WORKS_HOME>\codex_discord_bot` workspace-ként menne tovább. A kézi `DISCORD_CHANNEL_MAPPINGS_JSON` bejegyzések mindig elsőbbséget élveznek.
+Ilyenkor a nem kezzel mapelt forum nevebol dolgozik a bridge, de a worker sajat `workspaceRoot` gyokeret hasznalja. A kezi `DISCORD_CHANNEL_MAPPINGS_JSON` bejegyzesek mindig elsoseget elveznek.
 
-   Ha a Discord fórum neve kisbetűs slug, de a worker gépen a repo mappaneve más kis/nagybetűzést használ, adj meg alias táblát:
+7. Inditas a NAS-on, a feltoltott mappabol:
 
-   ```env
-   DISCORD_AUTO_WORKSPACE_ALIASES_JSON={"codex_discord_bot":"Codex_Discord_BOT"}
-   ```
+```sh
+docker compose up -d --build
+```
 
-   Ezzel a `codex_discord_bot` fórum már `<CODEX_WORKS_HOME>\Codex_Discord_BOT` workspace-re mutat. Ez szándékosan statikus konfiguráció, mert a NAS konténer nem látja közvetlenül a worker PC `E:\codex_works` fájlrendszerét.
+8. Log ellenorzes:
 
-6. Indítás a NAS-on, a feltöltött mappából:
+```sh
+docker compose logs -f codex-discord-bridge
+```
 
-   ```sh
-   docker compose up -d --build
-   ```
+## Munkahely vs otthon worker
 
-7. Log ellenőrzés:
+Javasolt felallas:
 
-   ```sh
-   docker compose logs -f codex-discord-bridge
-   ```
+- minden worker kapjon sajat `workspaceRoot` erteket a `DISCORD_WORKERS_JSON` mezoben
+- a worker titka kulon env valtozoba keruljon, a JSON csak ennek a nevet vigye `sharedSecretEnv` mezoben
+- az `otthon` worker rootja lehet a helyi `codex_works` gyoker
+- a `munkahely` worker rootja lehet egy masik gep sajat `codex_works` gyokere
+- a `DISCORD_CHANNEL_MAPPINGS_JSON` `workspace` erteke eleg, ha csak a repo neve, peldaul `Codex_Discord_BOT`
+
+Pelda:
+
+```env
+DISCORD_WORKERS_JSON=[{"id":"otthon","label":"Otthon worker","baseUrl":"http://worker-home.lan:8787","sharedSecretEnv":"DISCORD_WORKER_SHARED_SECRET_HOME","workspaceRoot":"E:\\codex_works"},{"id":"munkahely","label":"Munkahely worker","baseUrl":"http://worker-office.lan:8787","sharedSecretEnv":"DISCORD_WORKER_SHARED_SECRET_OFFICE","workspaceRoot":"D:\\codex_works"}]
+DISCORD_CHANNEL_MAPPINGS_JSON=[{"channelId":"100000000000000101","workspace":"Codex_Discord_BOT","workerId":"otthon"}]
+DISCORD_AUTO_WORKSPACE_ALIASES_JSON={"codex_discord_bot":"Codex_Discord_BOT"}
+```
+
+Igy a NAS-os bridge nem egyetlen fix utvonalat tarol, hanem a kivalasztott worker alapjan allitja elo a vegso workspace utat.
+
+Az env betolteshez hasznalhatod a `CODEX_DISCORD_ENV_FILE` valtozot is:
+
+- worker oldalon tipikusan `CODEX_DISCORD_ENV_FILE=.env`
+- NAS oldalon tipikusan `CODEX_DISCORD_ENV_FILE=.env.nas`
+
+Ha ez nincs megadva, a bot eloszor a `.env`, utana a `.env.nas` fajlt keresi.
 
 ## Fontos
 
-- A `.env.nas` fájlt soha ne commitold.
-- A `/data/sessions.json` runtime állapot, nem forráskód.
-- Az `app/` generált deploy bundle. Ha kódot módosítasz, futtasd újra a `scripts/prepare-nas-bundle.ps1` scriptet és töltsd fel újra a mappát.
-- A konténer csak a Discord bridge-et indítja újra. A worker PC újraindítása külön, később megtervezendő feladat.
-- A `docker compose config` valós `.env.nas` mellett kiírhatja a tokeneket és shared secre­teket, ezért csak fake/example env-vel használd.
+- A `.env.nas` fajlt soha ne commitold.
+- A `/data/sessions.json` runtime allapot, nem forraskod.
+- Az `app/` generalt deploy bundle. Ha kodot modositasz, futtasd ujra a `scripts/prepare-nas-bundle.ps1` scriptet es toltsd fel ujra a mappat.
+- A kontener csak a Discord bridge-et inditja ujra. A worker PC ujrainditasa kulon, kesobbre tervezendo feladat.
+- A `docker compose config` valos `.env.nas` mellett kiirhat tokeneket es shared secretet, ezert csak fake/example env-vel hasznald.

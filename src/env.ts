@@ -27,6 +27,21 @@ export function loadEnvFile(envPath = ".env", env: NodeJS.ProcessEnv = process.e
   }
 }
 
+export function loadDefaultEnvFiles(env: NodeJS.ProcessEnv = process.env): void {
+  const configuredPath = env.CODEX_DISCORD_ENV_FILE?.trim();
+  if (configuredPath) {
+    loadEnvFile(configuredPath, env);
+    return;
+  }
+
+  for (const candidate of [".env", ".env.nas"]) {
+    if (existsSync(candidate)) {
+      loadEnvFile(candidate, env);
+      return;
+    }
+  }
+}
+
 function unquoteEnvValue(value: string): string {
   if (
     (value.startsWith("\"") && value.endsWith("\"")) ||

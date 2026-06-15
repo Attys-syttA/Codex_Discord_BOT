@@ -1,8 +1,11 @@
+import path from "node:path";
+
 export interface WorkerTarget {
   id: string;
   label: string;
   baseUrl: string;
   sharedSecret?: string;
+  workspaceRoot?: string;
 }
 
 export interface DiscordChannelMapping {
@@ -30,16 +33,26 @@ export interface DiscordBridgeConfig {
   sessionStorePath: string;
 }
 
-export function loadConfig(env: NodeJS.ProcessEnv = process.env): DiscordBridgeConfig {
+export interface LoadConfigOptions {
+  configDir?: string;
+}
+
+export function loadConfig(
+  env: NodeJS.ProcessEnv = process.env,
+  options: LoadConfigOptions = {},
+): DiscordBridgeConfig {
+  const configDir = normalizePath(options.configDir ?? process.cwd());
+  const inferredWorkspaceRoot = dirnamePortable(configDir);
   const discordToken = requireEnv(env, "DISCORD_TOKEN");
   const applicationId = parseSnowflake(requireEnv(env, "DISCORD_APPLICATION_ID"), "DISCORD_APPLICATION_ID");
   const guildId = parseSnowflake(requireEnv(env, "DISCORD_GUILD_ID"), "DISCORD_GUILD_ID");
   const allowedUserIds = parseAllowedSnowflakes(requireEnv(env, "DISCORD_ALLOWED_USER_IDS"), "DISCORD_ALLOWED_USER_IDS");
   const allowedRoleIds = parseOptionalSnowflakes(optionalEnv(env, "DISCORD_ALLOWED_ROLE_IDS"), "DISCORD_ALLOWED_ROLE_IDS");
-  const channelMappings = parseChannelMappings(requireEnv(env, "DISCORD_CHANNEL_MAPPINGS_JSON"));
-  const workers = parseWorkers(requireEnv(env, "DISCORD_WORKERS_JSON"));
+  const workers = parseWorkers(requireEnv(env, "DISCORD_WORKERS_JSON"), configDir, env);
+  const workerById = new Map(workers.map((worker) => [worker.id, worker]));
   const defaultWorkerId = parseDefaultWorkerId(optionalEnv(env, "DISCORD_DEFAULT_WORKER_ID"), workers);
-  const autoWorkspaceRoot = optionalEnv(env, "DISCORD_AUTO_WORKSPACE_ROOT");
+  const autoWorkspaceRoot = resolvePortablePath(optionalEnv(env, "DISCORD_AUTO_WORKSPACE_ROOT"), configDir);
+  const channelMappings = parseChannelMappings(requireEnv(env, "DISCORD_CHANNEL_MAPPINGS_JSON"), configDir, workerById);
   const autoWorkspaceAliases = parseAutoWorkspaceAliases(optionalEnv(env, "DISCORD_AUTO_WORKSPACE_ALIASES_JSON"));
   const ephemeralResponses = parseBoolean(optionalEnv(env, "DISCORD_EPHEMERAL_RESPONSES"), true, "DISCORD_EPHEMERAL_RESPONSES");
   const workerTimeoutMs = parsePositiveInteger(
@@ -122,15 +135,23 @@ function parseOptionalSnowflakes(raw: string | undefined, name: string): string[
     .map((value) => parseSnowflake(value, name));
 }
 
-function parseChannelMappings(raw: string): DiscordChannelMapping[] {
+function parseChannelMappings(
+  raw: string,
+  workspaceBaseDir: string,
+  workerById: Map<string, WorkerTarget>,
+): DiscordChannelMapping[] {
   const parsed = parseJsonArray(raw, "DISCORD_CHANNEL_MAPPINGS_JSON");
   const seen = new Set<string>();
 
   return parsed.map((entry, index) => {
     const record = requireRecord(entry, `DISCORD_CHANNEL_MAPPINGS_JSON[${index}]`);
     const channelId = parseSnowflake(requireString(record.channelId, `DISCORD_CHANNEL_MAPPINGS_JSON[${index}].channelId`), `DISCORD_CHANNEL_MAPPINGS_JSON[${index}].channelId`);
-    const workspace = requireString(record.workspace, `DISCORD_CHANNEL_MAPPINGS_JSON[${index}].workspace`);
     const workerId = requireString(record.workerId, `DISCORD_CHANNEL_MAPPINGS_JSON[${index}].workerId`);
+    const workerWorkspaceBaseDir = workerById.get(workerId)?.workspaceRoot ?? workspaceBaseDir;
+    const workspace = resolvePortablePath(
+      requireString(record.workspace, `DISCORD_CHANNEL_MAPPINGS_JSON[${index}].workspace`),
+      workerWorkspaceBaseDir,
+    ) ?? requireString(record.workspace, `DISCORD_CHANNEL_MAPPINGS_JSON[${index}].workspace`);
 
     if (seen.has(channelId)) {
       throw new Error(`Duplicate channelId in DISCORD_CHANNEL_MAPPINGS_JSON: ${channelId}`);
@@ -141,7 +162,7 @@ function parseChannelMappings(raw: string): DiscordChannelMapping[] {
   });
 }
 
-function parseWorkers(raw: string): WorkerTarget[] {
+function parseWorkers(raw: string, configDir: string, env: NodeJS.ProcessEnv): WorkerTarget[] {
   const parsed = parseJsonArray(raw, "DISCORD_WORKERS_JSON");
   const seen = new Set<string>();
 
@@ -151,13 +172,26 @@ function parseWorkers(raw: string): WorkerTarget[] {
     const label = requireString(record.label, `DISCORD_WORKERS_JSON[${index}].label`);
     const baseUrl = requireString(record.baseUrl, `DISCORD_WORKERS_JSON[${index}].baseUrl`);
     const sharedSecret = optionalString(record.sharedSecret);
+    const sharedSecretEnv = optionalString(record.sharedSecretEnv);
+    const workspaceRoot = optionalString(record.workspaceRoot);
 
     if (seen.has(id)) {
       throw new Error(`Duplicate worker id in DISCORD_WORKERS_JSON: ${id}`);
     }
     seen.add(id);
 
-    return sharedSecret ? { id, label, baseUrl, sharedSecret } : { id, label, baseUrl };
+    const resolvedSharedSecret = sharedSecretEnv
+      ? requireEnv(env, sharedSecretEnv)
+      : sharedSecret;
+    const resolvedWorkspaceRoot = resolvePortablePath(workspaceRoot, configDir);
+
+    return {
+      id,
+      label,
+      baseUrl,
+      ...(resolvedSharedSecret ? { sharedSecret: resolvedSharedSecret } : {}),
+      ...(resolvedWorkspaceRoot ? { workspaceRoot: resolvedWorkspaceRoot } : {}),
+    };
   });
 
   if (workers.length === 0) {
@@ -271,4 +305,34 @@ function optionalString(value: unknown): string | undefined {
     return undefined;
   }
   return value.trim();
+}
+
+function resolvePortablePath(raw: string | undefined, baseDir: string): string | undefined {
+  if (!raw) {
+    return undefined;
+  }
+
+  const value = raw.trim();
+  if (!value) {
+    return undefined;
+  }
+
+  const pathModule = getPathModule(value, baseDir);
+  return normalizePath(pathModule.isAbsolute(value) ? value : pathModule.resolve(baseDir, value));
+}
+
+function dirnamePortable(value: string): string {
+  return normalizePath(getPathModule(value).dirname(value));
+}
+
+function normalizePath(value: string): string {
+  return getPathModule(value).normalize(value);
+}
+
+function getPathModule(...values: string[]): typeof path.win32 | typeof path.posix {
+  return values.some(isWindowsLikePath) ? path.win32 : path.posix;
+}
+
+function isWindowsLikePath(value: string): boolean {
+  return /^[A-Za-z]:[\\/]/.test(value) || value.includes("\\");
 }

@@ -1,9 +1,9 @@
 import { loadConfig } from "./config.js";
 import { createDiscordClient, registerGuildCommands } from "./discord-bot.js";
-import { loadEnvFile } from "./env.js";
+import { loadDefaultEnvFiles } from "./env.js";
 import { FileSessionRegistry } from "./session-registry.js";
 
-loadEnvFile();
+loadDefaultEnvFiles();
 const config = loadConfig();
 
 console.log("Codex Discord bridge skeleton loaded", {

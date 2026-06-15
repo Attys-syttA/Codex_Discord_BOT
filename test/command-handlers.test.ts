@@ -4,27 +4,32 @@ import { loadConfig } from "../src/config.js";
 import { handleBridgeCommand, type BridgeCommandInput, type BridgeWorkerClient } from "../src/command-handlers.js";
 import { SessionRegistry } from "../src/session-registry.js";
 
+const CONFIG_DIR = "C:\\codex_works\\Codex_Discord_BOT";
+const WORKSPACE_ROOT = "C:\\codex_works";
+const REPO_WORKSPACE = "C:\\codex_works\\Codex_Discord_BOT";
+
 const env = {
   DISCORD_TOKEN: "TEST_ONLY_DISCORD_BOT_TOKEN",
   DISCORD_APPLICATION_ID: "100000000000000010",
   DISCORD_GUILD_ID: "100000000000000001",
   DISCORD_ALLOWED_USER_IDS: "100000000000000999",
-  DISCORD_ALLOWED_ROLE_IDS: "1515659000000000000",
+  DISCORD_ALLOWED_ROLE_IDS: "100000000000000301",
   DISCORD_CHANNEL_MAPPINGS_JSON: JSON.stringify([
     {
       channelId: "100000000000000101",
-      workspace: "E:\\codex_works\\Codex_Discord_BOT",
-      workerId: "otthon",
+      workspace: "Codex_Discord_BOT",
+      workerId: "worker-home",
     },
   ]),
   DISCORD_WORKERS_JSON: JSON.stringify([
     {
-      id: "otthon",
-      label: "Otthon worker",
+      id: "worker-home",
+      label: "Home worker",
       baseUrl: "http://127.0.0.1:8787",
+      workspaceRoot: "..",
     },
   ]),
-  DISCORD_DEFAULT_WORKER_ID: "otthon",
+  DISCORD_DEFAULT_WORKER_ID: "worker-home",
 };
 
 const baseInput: BridgeCommandInput = {
@@ -43,19 +48,19 @@ describe("handleBridgeCommand", () => {
       getHealth: async () => ({ mode: "remote-worker" }),
       createSession: async () => ({
         sessionId: "worker-session-1",
-        info: { threadId: null, workspace: "E:\\codex_works\\Codex_Discord_BOT" },
+        info: { threadId: null, workspace: REPO_WORKSPACE },
       }),
       getSessionInfo: async () => ({
         threadId: "codex-thread-live",
-        workspace: "E:\\codex_works\\Codex_Discord_BOT",
+        workspace: REPO_WORKSPACE,
       }),
       newThread: async () => ({
         threadId: "codex-thread-new",
-        workspace: "E:\\codex_works\\Codex_Discord_BOT",
+        workspace: REPO_WORKSPACE,
       }),
       resumeThread: async (_sessionId: string, threadId: string) => ({
         threadId,
-        workspace: "E:\\codex_works\\Codex_Discord_BOT",
+        workspace: REPO_WORKSPACE,
       }),
       abort: async () => undefined,
       prompt: async () => undefined,
@@ -65,33 +70,32 @@ describe("handleBridgeCommand", () => {
 
   it("renders /session for an empty mapped thread context", async () => {
     const response = await handleBridgeCommand(baseInput, {
-      config: loadConfig(env),
+      config: loadConfig(env, { configDir: CONFIG_DIR }),
       sessions: new SessionRegistry(),
     });
 
     expect(response.ephemeral).toBe(true);
     expect(response.content).toContain("No active session");
-    expect(response.content).toContain("E:\\codex_works\\Codex_Discord_BOT");
+    expect(response.content).toContain(REPO_WORKSPACE);
   });
 
   it("auto maps an unmapped forum thread by parent channel name", async () => {
     const response = await handleBridgeCommand({
       ...baseInput,
-      channelId: "1515659999999999999",
-      parentId: "1515658888888888888",
+      channelId: "100000000000000202",
+      parentId: "100000000000000102",
       parentName: "codex_discord_bot",
     }, {
       config: loadConfig({
         ...env,
         DISCORD_CHANNEL_MAPPINGS_JSON: "[]",
-        DISCORD_AUTO_WORKSPACE_ROOT: "E:\\codex_works",
-      }),
+      }, { configDir: CONFIG_DIR }),
       sessions: new SessionRegistry(),
     });
 
     expect(response.content).toContain("No active session");
-    expect(response.content).toContain("Context: 100000000000000001:1515658888888888888:1515659999999999999");
-    expect(response.content).toContain("Workspace: E:\\codex_works\\codex_discord_bot");
+    expect(response.content).toContain("Context: 100000000000000001:100000000000000102:100000000000000202");
+    expect(response.content).toContain(`Workspace: ${WORKSPACE_ROOT}\\codex_discord_bot`);
   });
 
   it("prefers explicit channel mappings over auto workspace mapping", async () => {
@@ -101,38 +105,65 @@ describe("handleBridgeCommand", () => {
     }, {
       config: loadConfig({
         ...env,
-        DISCORD_AUTO_WORKSPACE_ROOT: "E:\\codex_works",
-      }),
+      }, { configDir: CONFIG_DIR }),
       sessions: new SessionRegistry(),
     });
 
-    expect(response.content).toContain("Workspace: E:\\codex_works\\Codex_Discord_BOT");
+    expect(response.content).toContain(`Workspace: ${REPO_WORKSPACE}`);
   });
 
   it("uses auto workspace aliases to canonicalize forum slug names", async () => {
     const response = await handleBridgeCommand({
       ...baseInput,
-      channelId: "1515659999999999999",
-      parentId: "1515658888888888888",
+      channelId: "100000000000000202",
+      parentId: "100000000000000102",
       parentName: "codex_discord_bot",
     }, {
       config: loadConfig({
         ...env,
         DISCORD_CHANNEL_MAPPINGS_JSON: "[]",
-        DISCORD_AUTO_WORKSPACE_ROOT: "E:\\codex_works",
         DISCORD_AUTO_WORKSPACE_ALIASES_JSON: JSON.stringify({
           codex_discord_bot: "Codex_Discord_BOT",
         }),
-      }),
+      }, { configDir: CONFIG_DIR }),
       sessions: new SessionRegistry(),
     });
 
-    expect(response.content).toContain("Workspace: E:\\codex_works\\Codex_Discord_BOT");
+    expect(response.content).toContain(`Workspace: ${REPO_WORKSPACE}`);
+  });
+
+  it("uses the default worker workspace root for auto mapping", async () => {
+    const response = await handleBridgeCommand({
+      ...baseInput,
+      channelId: "100000000000000202",
+      parentId: "100000000000000102",
+      parentName: "codex_discord_bot",
+    }, {
+      config: loadConfig({
+        ...env,
+        DISCORD_CHANNEL_MAPPINGS_JSON: "[]",
+        DISCORD_WORKERS_JSON: JSON.stringify([
+          {
+            id: "worker-office",
+            label: "Office worker",
+            baseUrl: "http://127.0.0.1:8788",
+            workspaceRoot: "D:\\codex_works",
+          },
+        ]),
+        DISCORD_DEFAULT_WORKER_ID: "worker-office",
+        DISCORD_AUTO_WORKSPACE_ALIASES_JSON: JSON.stringify({
+          codex_discord_bot: "Codex_Discord_BOT",
+        }),
+      }, { configDir: CONFIG_DIR }),
+      sessions: new SessionRegistry(),
+    });
+
+    expect(response.content).toContain("Workspace: D:\\codex_works\\Codex_Discord_BOT");
   });
 
   it("blocks users outside the allowlist", async () => {
-    const response = await handleBridgeCommand({ ...baseInput, userId: "1515658000000000000" }, {
-      config: loadConfig(env),
+    const response = await handleBridgeCommand({ ...baseInput, userId: "100000000000000998" }, {
+      config: loadConfig(env, { configDir: CONFIG_DIR }),
       sessions: new SessionRegistry(),
     });
 
@@ -142,10 +173,10 @@ describe("handleBridgeCommand", () => {
   it("allows configured roles even when the user id is not listed", async () => {
     const response = await handleBridgeCommand({
       ...baseInput,
-      userId: "1515658000000000000",
-      memberRoleIds: ["1515659000000000000"],
+      userId: "100000000000000998",
+      memberRoleIds: ["100000000000000301"],
     }, {
-      config: loadConfig(env),
+      config: loadConfig(env, { configDir: CONFIG_DIR }),
       sessions: new SessionRegistry(),
     });
 
@@ -156,21 +187,21 @@ describe("handleBridgeCommand", () => {
     const sessions = new SessionRegistry();
     const calls: string[] = [];
     const response = await handleBridgeCommand({ ...baseInput, commandName: "new" }, {
-      config: loadConfig(env),
+      config: loadConfig(env, { configDir: CONFIG_DIR }),
       sessions,
       createWorkerClient: () => createMockWorker({
         createSession: async () => {
           calls.push("createSession");
           return {
             sessionId: "worker-session-1",
-            info: { threadId: null, workspace: "E:\\codex_works\\Codex_Discord_BOT" },
+            info: { threadId: null, workspace: REPO_WORKSPACE },
           };
         },
         newThread: async () => {
           calls.push("newThread");
           return {
             threadId: "codex-thread-new",
-            workspace: "E:\\codex_works\\Codex_Discord_BOT",
+            workspace: REPO_WORKSPACE,
           };
         },
       }),
@@ -184,7 +215,7 @@ describe("handleBridgeCommand", () => {
 
   it("attaches and renders a handoff command", async () => {
     const sessions = new SessionRegistry();
-    const config = loadConfig(env);
+    const config = loadConfig(env, { configDir: CONFIG_DIR });
 
     await handleBridgeCommand({
       ...baseInput,
@@ -199,7 +230,7 @@ describe("handleBridgeCommand", () => {
 
   it("refreshes live worker session info in /session", async () => {
     const sessions = new SessionRegistry();
-    const config = loadConfig(env);
+    const config = loadConfig(env, { configDir: CONFIG_DIR });
     await handleBridgeCommand({ ...baseInput, commandName: "new" }, {
       config,
       sessions,
@@ -212,7 +243,7 @@ describe("handleBridgeCommand", () => {
       createWorkerClient: () => createMockWorker({
         getSessionInfo: async () => ({
           threadId: "codex-thread-refreshed",
-          workspace: "E:\\codex_works\\Codex_Discord_BOT",
+          workspace: REPO_WORKSPACE,
         }),
       }),
     });
@@ -223,7 +254,7 @@ describe("handleBridgeCommand", () => {
 
   it("calls worker abort for a recorded worker session", async () => {
     const sessions = new SessionRegistry();
-    const config = loadConfig(env);
+    const config = loadConfig(env, { configDir: CONFIG_DIR });
     await handleBridgeCommand({ ...baseInput, commandName: "new" }, {
       config,
       sessions,
@@ -251,7 +282,7 @@ describe("handleBridgeCommand", () => {
       commandName: "ask",
       options: { prompt: "Hol tartunk?" },
     }, {
-      config: loadConfig(env),
+      config: loadConfig(env, { configDir: CONFIG_DIR }),
       sessions: new SessionRegistry(),
       createWorkerClient: () => createMockWorker(),
     });
@@ -261,7 +292,7 @@ describe("handleBridgeCommand", () => {
 
   it("sends /ask prompts to the active worker session", async () => {
     const sessions = new SessionRegistry();
-    const config = loadConfig(env);
+    const config = loadConfig(env, { configDir: CONFIG_DIR });
     await handleBridgeCommand({ ...baseInput, commandName: "new" }, {
       config,
       sessions,
@@ -309,7 +340,7 @@ describe("handleBridgeCommand", () => {
 
   it("does not expose raw worker command lines in /ask responses", async () => {
     const sessions = new SessionRegistry();
-    const config = loadConfig(env);
+    const config = loadConfig(env, { configDir: CONFIG_DIR });
     await handleBridgeCommand({ ...baseInput, commandName: "new" }, {
       config,
       sessions,
@@ -339,7 +370,7 @@ describe("handleBridgeCommand", () => {
 
   it("splits long /ask responses into follow-up message chunks", async () => {
     const sessions = new SessionRegistry();
-    const config = loadConfig(env);
+    const config = loadConfig(env, { configDir: CONFIG_DIR });
     await handleBridgeCommand({ ...baseInput, commandName: "new" }, {
       config,
       sessions,
@@ -372,7 +403,7 @@ describe("handleBridgeCommand", () => {
 
   it("renders /doctor with worker health from the injectable client", async () => {
     const response = await handleBridgeCommand({ ...baseInput, commandName: "doctor" }, {
-      config: loadConfig(env),
+      config: loadConfig(env, { configDir: CONFIG_DIR }),
       sessions: new SessionRegistry(),
       createWorkerClient: () => createMockWorker(),
     });

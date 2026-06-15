@@ -1,57 +1,52 @@
 # Codex_Discord_BOT
 
-Codex_Discord_BOT egy külön Discord pilot projekt a Codex távoli vezérlésére.
+`Codex_Discord_BOT` egy kulon Discord pilot projekt a Codex tavoli vezerlesere.
 
-A cél nem a meglévő Telegram bridge átírása, hanem egy tisztább Discord-alapú vezérlőfelület kipróbálása. A tervezett modell egyszerű:
+A cel nem a meglevo Telegram bridge atirasa, hanem egy tisztabb Discord-alapu vezerlofelulet kiprobalasa. A modell roviden:
 
-- Discord server: a Codex vezérlőfelület
-- Discord channel: egy fix repo vagy workspace
-- Discord thread: egy Codex session vagy átadási szál
-- NAS bridge: a mindig futó közvetítő
-- worker PC: az a gép, ahol a Codex, Git és fájlrendszer ténylegesen dolgozik
+- Discord server: a Codex vezerlofelulet
+- Discord forum/channel: egy fix repo vagy workspace
+- Discord thread: egy Codex session vagy atadasi szal
+- NAS bridge: a mindig futo kozvetito
+- worker PC: az a gep, ahol a Codex, Git es a fajlrendszer tenylegesen dolgozik
 
-## Miért Discord?
+## Biztonsag
 
-A Discord jobban illeszkedik a repo-alapú munkához, mert a csatornák és threadek natív szervezési eszközök. Egy `#email-header-analyzer` vagy `#attys-bridge` csatorna természetesen kötődhet egy projekthez, a csatornán belüli thread pedig egy konkrét fejlesztési szálhoz.
+- Token, worker secret es valodi `.env` fajl nem kerulhet Gitbe.
+- A NAS bridge ne kapjon Codex authot, GitHub authot vagy kozvetlen repo-irasi jogot.
+- A worker oldali titkok menjenek env-bol. A JSON config csak a hivatkozo env-nevet hordozza, peldaul `sharedSecretEnv`.
 
-A Telegram bridge ettől nem válik feleslegessé. Az továbbra is stabil fallback és működő referencia marad.
+## Ellenorzes
 
-## Első cél
-
-Az első projektfázis dokumentációs és architekturális:
-
-1. rögzíteni a projekt szabályait,
-2. megtervezni a Discord platform MVP-t,
-3. később külön lépésben felépíteni a TypeScript + `discord.js` alapú botot.
-
-## Biztonsági alapelv
-
-A Discord bot ne kapjon közvetlen repo- vagy credential-hozzáférést. A worker PC marad a bizalmi határ: ott él a Codex auth, GitHub auth, Git és a helyi fájlrendszer.
-
-Tokenek, worker secret-ek és `.env` fájlok nem kerülhetnek Gitbe.
-
-## Ellenőrző workspace
-
-Helyi fejlesztésnél a fő ellenőrzés:
+Helyi fejlesztesnel a fo ellenorzes:
 
 ```powershell
 npm run check:workspace
 ```
 
-Ez lefuttatja a typecheck, Vitest, build, NAS bundle, whitespace és secret scan ellenőrzéseket. Ha Docker elérhető, a NAS Docker image buildet is kipróbálja.
+Ez lefuttatja a typecheck, teszt, build, NAS bundle, whitespace es secret scan ellenorzeseket. Ha Docker elerheto, a NAS image buildet is megprobalja.
 
-GitHubon a `.github/workflows/ci.yml` futtatja a Node 20 alapú CI-t:
-
-- `npm run typecheck`
-- `npm test`
-- `npm run build`
-- `npm run audit:deps`
-- `npm run nas:bundle:prepare`
-- NAS Docker image build
-- `git diff --check`
-
-NAS feltöltés előtt mindig készíts friss deploy bundle-t:
+NAS feltoltes elott mindig keszits friss deploy bundle-t:
 
 ```powershell
 npm run nas:bundle:prepare
 ```
+
+## Workspace utvonalak
+
+Frissitett gyakorlat:
+
+- minden worker kaphat sajat `workspaceRoot` erteket
+- a `DISCORD_CHANNEL_MAPPINGS_JSON` `workspace` mezoje lehet csak repo-nev, peldaul `"Codex_Discord_BOT"`
+- a worker `sharedSecret` kulon env-valtozobol is johet `sharedSecretEnv` mezon at
+- auto forum mappingnel a bridge a kivalasztott worker `workspaceRoot` ertekebol epiti fel a vegso workspace utat
+- a bot indulaskor a `CODEX_DISCORD_ENV_FILE` altal megadott env fajlt tolti be; ha ez nincs megadva, eloszor a `.env`, utana a `.env.nas` fajlt keresi
+
+Ez kezeli azt is, hogy ugyanaz a repo kulonbozo worker gepeken mas-mas `codex_works` gyoker alatt lehet.
+
+Helyi, workeres futtatasnal a `.env` minta maradhat egyszeru:
+
+- a channel mapping `workspace` mezoje lehet `"Codex_Discord_BOT"`
+- a worker `workspaceRoot` lehet `..`
+
+Igy nem kell a mintafajlban meghajtobetuket cserelgetni. NAS-os bridge eseten tovabbra is erdemes explicit worker-oldali gyokerutat megadni, mert a kontener nem a worker PC fajlrendszeren fut.

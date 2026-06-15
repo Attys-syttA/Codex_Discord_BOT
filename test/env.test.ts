@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { loadEnvFile } from "../src/env.js";
+import { loadDefaultEnvFiles, loadEnvFile } from "../src/env.js";
 
 const tempDirs: string[] = [];
 
@@ -29,5 +29,18 @@ describe("loadEnvFile", () => {
     expect(env.DISCORD_TOKEN).toBe("from-file");
     expect(env.EXISTING).toBe("already-set");
     expect(env.QUOTED).toBe("hello world");
+  });
+
+  it("prefers CODEX_DISCORD_ENV_FILE when provided", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "codex-discord-env-"));
+    tempDirs.push(dir);
+    const envPath = path.join(dir, ".env.nas");
+    await writeFile(envPath, "DISCORD_TOKEN=from-nas-file\n");
+
+    const env: NodeJS.ProcessEnv = { CODEX_DISCORD_ENV_FILE: envPath };
+
+    loadDefaultEnvFiles(env);
+
+    expect(env.DISCORD_TOKEN).toBe("from-nas-file");
   });
 });

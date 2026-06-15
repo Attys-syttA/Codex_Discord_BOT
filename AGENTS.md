@@ -4,7 +4,7 @@
 
 This repository is the dedicated Discord pilot for Codex remote control:
 
-- local path: `<CODEX_WORKS_HOME>\Codex_Discord_BOT`
+- local path: `<CODEX_WORKS>\Codex_Discord_BOT`
 - intended GitHub repository name: `Codex_Discord_BOT`
 
 Treat it as a separate repository from `AttysCodexBridge_NAS`. The Telegram bridge is a reference and fallback, not a folder to edit from this project unless the user explicitly asks for cross-repo work.
@@ -27,7 +27,7 @@ Do not move worker-side secrets, Codex auth, GitHub auth, or local repository wr
 
 Before modifying files:
 
-- follow the parent `E:\codex_works\AGENTS.md` Windows MCP / Serena startup hygiene rules
+- follow the parent `<CODEX_WORKS>\AGENTS.md` Windows MCP / Serena startup hygiene rules
 - run `git status` if this folder is a Git repository
 - identify whether the change is docs-only, scaffold, implementation, or cross-repo
 - inspect existing files before changing them

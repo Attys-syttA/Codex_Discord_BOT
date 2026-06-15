@@ -125,7 +125,13 @@ function resolveAutoWorkspaceMapping(
   config: DiscordBridgeConfig,
   projectChannelId: string,
 ): DiscordChannelMapping | undefined {
-  if (!config.autoWorkspaceRoot) {
+  const worker = config.workers.find((candidate) => candidate.id === config.defaultWorkerId);
+  if (!worker) {
+    throw new Error(`Default worker is missing from config: ${config.defaultWorkerId}`);
+  }
+
+  const workspaceRoot = worker.workspaceRoot ?? config.autoWorkspaceRoot;
+  if (!workspaceRoot) {
     return undefined;
   }
 
@@ -137,8 +143,8 @@ function resolveAutoWorkspaceMapping(
   const projectName = config.autoWorkspaceAliases.get(rawProjectName.toLowerCase()) ?? rawProjectName;
   return {
     channelId: projectChannelId,
-    workspace: joinWorkspacePath(config.autoWorkspaceRoot, projectName),
-    workerId: config.defaultWorkerId,
+    workspace: joinWorkspacePath(workspaceRoot, projectName),
+    workerId: worker.id,
   };
 }
 
