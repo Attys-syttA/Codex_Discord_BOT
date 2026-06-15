@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { loadConfig } from "../src/config.js";
 
-const CONFIG_DIR = "C:\\codex_works\\Codex_Discord_BOT";
-const WORKSPACE_ROOT = "C:\\codex_works";
+const CONFIG_DIR = "C:\\workspace\\Codex_Discord_BOT";
+const WORKSPACE_ROOT = "C:\\workspace";
 
 const baseEnv = {
   DISCORD_TOKEN: "TEST_ONLY_DISCORD_BOT_TOKEN",
@@ -81,7 +81,7 @@ describe("loadConfig", () => {
       ]),
     }, { configDir: CONFIG_DIR });
 
-    expect(config.channelMappings[0]?.workspace).toBe("C:\\codex_works\\email_header_analyzer");
+    expect(config.channelMappings[0]?.workspace).toBe("C:\\workspace\\email_header_analyzer");
   });
 
   it("stores per-worker workspace roots", () => {
@@ -179,8 +179,8 @@ describe("loadConfig", () => {
         { channelId: "100000000000000102", workspace: "email-header-analyzer", workerId: "worker-office" },
       ]),
       DISCORD_WORKERS_JSON: JSON.stringify([
-        { id: "worker-home", label: "Home worker", baseUrl: "http://127.0.0.1:8787", workspaceRoot: "E:\\codex_works" },
-        { id: "worker-office", label: "Office worker", baseUrl: "http://127.0.0.1:8788", workspaceRoot: "D:\\codex_works" },
+        { id: "worker-home", label: "Home worker", baseUrl: "http://127.0.0.1:8787", workspaceRoot: "E:\\workspace-home" },
+        { id: "worker-office", label: "Office worker", baseUrl: "http://127.0.0.1:8788", workspaceRoot: "D:\\workspace-office" },
       ]),
       DISCORD_DEFAULT_WORKER_ID: "worker-office",
     }, { configDir: CONFIG_DIR });
@@ -188,6 +188,6 @@ describe("loadConfig", () => {
     expect(config.workers).toHaveLength(2);
     expect(config.channelMappings).toHaveLength(2);
     expect(config.defaultWorkerId).toBe("worker-office");
-    expect(config.channelMappings[1]?.workspace).toBe("D:\\codex_works\\email-header-analyzer");
+    expect(config.channelMappings[1]?.workspace).toBe("D:\\workspace-office\\email-header-analyzer");
   });
 });

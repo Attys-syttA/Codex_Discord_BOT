@@ -4,9 +4,9 @@ import { loadConfig } from "../src/config.js";
 import { handleBridgeCommand, type BridgeCommandInput, type BridgeWorkerClient } from "../src/command-handlers.js";
 import { SessionRegistry } from "../src/session-registry.js";
 
-const CONFIG_DIR = "C:\\codex_works\\Codex_Discord_BOT";
-const WORKSPACE_ROOT = "C:\\codex_works";
-const REPO_WORKSPACE = "C:\\codex_works\\Codex_Discord_BOT";
+const CONFIG_DIR = "C:\\workspace\\Codex_Discord_BOT";
+const WORKSPACE_ROOT = "C:\\workspace";
+const REPO_WORKSPACE = "C:\\workspace\\Codex_Discord_BOT";
 
 const env = {
   DISCORD_TOKEN: "TEST_ONLY_DISCORD_BOT_TOKEN",
@@ -147,7 +147,7 @@ describe("handleBridgeCommand", () => {
             id: "worker-office",
             label: "Office worker",
             baseUrl: "http://127.0.0.1:8788",
-            workspaceRoot: "D:\\codex_works",
+            workspaceRoot: "D:\\workspace-office",
           },
         ]),
         DISCORD_DEFAULT_WORKER_ID: "worker-office",
@@ -158,7 +158,7 @@ describe("handleBridgeCommand", () => {
       sessions: new SessionRegistry(),
     });
 
-    expect(response.content).toContain("Workspace: D:\\codex_works\\Codex_Discord_BOT");
+    expect(response.content).toContain("Workspace: D:\\workspace-office\\Codex_Discord_BOT");
   });
 
   it("blocks users outside the allowlist", async () => {

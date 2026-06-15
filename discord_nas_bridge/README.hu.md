@@ -36,7 +36,7 @@ cp .env.nas.example .env.nas
 5. A worker URL a NAS nezopontjabol legyen elerheto, peldaul:
 
 ```env
-DISCORD_WORKERS_JSON=[{"id":"worker-home","label":"Otthoni worker","baseUrl":"http://worker-home.lan:8787","sharedSecretEnv":"DISCORD_WORKER_SHARED_SECRET_HOME","workspaceRoot":"E:\\codex_works"}]
+DISCORD_WORKERS_JSON=[{"id":"worker-home","label":"Otthoni worker","baseUrl":"http://worker-home.lan:8787","sharedSecretEnv":"DISCORD_WORKER_SHARED_SECRET_HOME","workspaceRoot":"E:\\workspace-home"}]
 ```
 
 6. Ha uj Discord forumokat szeretnel automatikusan repohoz kotni, add meg az alias tablazatot:
@@ -65,14 +65,14 @@ Javasolt felallas:
 
 - minden worker kapjon sajat `workspaceRoot` erteket a `DISCORD_WORKERS_JSON` mezoben
 - a worker titka kulon env valtozoba keruljon, a JSON csak ennek a nevet vigye `sharedSecretEnv` mezoben
-- az `otthon` worker rootja lehet a helyi `codex_works` gyoker
-- a `munkahely` worker rootja lehet egy masik gep sajat `codex_works` gyokere
+- az `otthon` worker rootja lehet a helyi workspace gyoker
+- a `munkahely` worker rootja lehet egy masik gep sajat workspace gyokere
 - a `DISCORD_CHANNEL_MAPPINGS_JSON` `workspace` erteke eleg, ha csak a repo neve, peldaul `Codex_Discord_BOT`
 
 Pelda:
 
 ```env
-DISCORD_WORKERS_JSON=[{"id":"otthon","label":"Otthon worker","baseUrl":"http://worker-home.lan:8787","sharedSecretEnv":"DISCORD_WORKER_SHARED_SECRET_HOME","workspaceRoot":"E:\\codex_works"},{"id":"munkahely","label":"Munkahely worker","baseUrl":"http://worker-office.lan:8787","sharedSecretEnv":"DISCORD_WORKER_SHARED_SECRET_OFFICE","workspaceRoot":"D:\\codex_works"}]
+DISCORD_WORKERS_JSON=[{"id":"otthon","label":"Otthon worker","baseUrl":"http://worker-home.lan:8787","sharedSecretEnv":"DISCORD_WORKER_SHARED_SECRET_HOME","workspaceRoot":"E:\\workspace-home"},{"id":"munkahely","label":"Munkahely worker","baseUrl":"http://worker-office.lan:8787","sharedSecretEnv":"DISCORD_WORKER_SHARED_SECRET_OFFICE","workspaceRoot":"D:\\workspace-office"}]
 DISCORD_CHANNEL_MAPPINGS_JSON=[{"channelId":"100000000000000101","workspace":"Codex_Discord_BOT","workerId":"otthon"}]
 DISCORD_AUTO_WORKSPACE_ALIASES_JSON={"codex_discord_bot":"Codex_Discord_BOT"}
 ```

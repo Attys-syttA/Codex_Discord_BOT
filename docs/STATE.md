@@ -17,7 +17,7 @@ Make the repository safe to publish without breaking the current bot behavior.
 - Git history cleanup was completed locally:
   - `git-filter-repo` was installed on this machine
   - repository history was rewritten to replace the earlier private Discord IDs, operator name, bot name, private LAN IP examples, and machine-specific path examples
-  - a pre-rewrite safety bundle and working-tree patch were saved under `D:\codex_works\_history_cleanup_backup\`
+  - a pre-rewrite safety bundle and working-tree patch were saved under a local backup folder outside the repository
   - the `origin` remote was restored after the rewrite
 - Worker-specific workspace root support was added:
   - each worker can declare its own optional `workspaceRoot`

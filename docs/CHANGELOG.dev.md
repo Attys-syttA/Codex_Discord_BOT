@@ -13,7 +13,7 @@ Append-only development log for `Codex_Discord_BOT`.
 ## 2026-06-15 09:26 +02:00
 
 - Cel: A korabbi privat azonosito-maradvanyok kiszedese a Git tortenetbol is, nem csak a jelenlegi munkafabol.
-- Modositott fajlok: atirt Git tortenet; helyi biztonsagi mentesek `D:\codex_works\_history_cleanup_backup\` alatt; a jelenlegi munkafa fajljai a korabbi tisztitott allapotban maradtak.
+- Modositott fajlok: atirt Git tortenet; helyi biztonsagi mentesek egy repo-n kivuli backup mappaban; a jelenlegi munkafa fajljai a korabbi tisztitott allapotban maradtak.
 - Futtatott parancsok: `python -m pip install --user git-filter-repo`; `git stash push --include-untracked`; `python -m git_filter_repo --force --replace-text ... --replace-message ...`; `git remote add origin https://github.com/Attys-syttA/Codex_Discord_BOT.git`; `git stash pop`; `npm test`; `npm run typecheck`; `npm run build`; `git diff --check`; `ggshield secret scan repo .`; celzott `git log -G` es `rg` ujraellenorzesek.
 - Eredmeny: A repotortenet lokalisan at lett irva. A korabbi konkret Discord ID-k, operatori nev, botnev, privat LAN IP-peldak es nehany gephez kotott utvonalmaradvany mar nem erheto el a tisztitott tortenetbol. A runtime ellenorzesek a rewrite utan is zoldre futottak.
 - Nyitott follow-up: a mostani tiszta munkafa commitolasa, majd a rewrite miatt kotelezo `git push --force-with-lease` a tavoli `main`agra.
@@ -28,7 +28,7 @@ Append-only development log for `Codex_Discord_BOT`.
 
 ## 2026-06-15 08:20 +02:00
 
-- Cel: A NAS-os bridge workerenkenti workspace gyokerrel tudja kezelni a kulonbozo gepeken levo `codex_works` kornyezeteket.
+- Cel: A NAS-os bridge workerenkenti workspace gyokerrel tudja kezelni a kulonbozo gepeken levo workspace kornyezeteket.
 - Modositott fajlok: `.env.example`, `README.md`, `discord_nas_bridge/.env.nas.example`, `discord_nas_bridge/README.hu.md`, `src/config.ts`, `src/command-handlers.ts`, `test/config.test.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
 - Futtatott parancsok: `npm test -- config command-handlers`; `npm run typecheck`; `npm run build`.
 - Eredmeny: A worker konfiguracio most mar tartalmazhat sajat `workspaceRoot` mezot. A kezi channel mapping `workspace` erteke lehet csak repo-nev vagy worker-roothoz kepesti relativ utvonal, az auto forum mapping pedig a kivalasztott default worker rootjabol epiti fel a vegso workspace utat.

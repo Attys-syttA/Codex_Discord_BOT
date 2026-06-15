@@ -42,7 +42,7 @@ Frissitett gyakorlat:
 - auto forum mappingnel a bridge a kivalasztott worker `workspaceRoot` ertekebol epiti fel a vegso workspace utat
 - a bot indulaskor a `CODEX_DISCORD_ENV_FILE` altal megadott env fajlt tolti be; ha ez nincs megadva, eloszor a `.env`, utana a `.env.nas` fajlt keresi
 
-Ez kezeli azt is, hogy ugyanaz a repo kulonbozo worker gepeken mas-mas `codex_works` gyoker alatt lehet.
+Ez kezeli azt is, hogy ugyanaz a repo kulonbozo worker gepeken mas-mas workspace gyoker alatt lehet.
 
 Helyi, workeres futtatasnal a `.env` minta maradhat egyszeru:
 

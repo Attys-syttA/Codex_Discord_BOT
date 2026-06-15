@@ -12,13 +12,13 @@ describe("SessionRegistry", () => {
       contextKey: "100000000000000001:100000000000000101:100000000000000201",
       projectChannelId: "100000000000000101",
       threadId: "100000000000000201",
-      workspace: "C:\\codex_works\\Codex_Discord_BOT",
+      workspace: "C:\\workspace\\Codex_Discord_BOT",
       workerId: "worker-alpha",
     });
 
     expect(metadata.updatedAt).toEqual(expect.any(String));
     expect(registry.get(metadata.contextKey)).toMatchObject({
-      workspace: "C:\\codex_works\\Codex_Discord_BOT",
+      workspace: "C:\\workspace\\Codex_Discord_BOT",
       workerId: "worker-alpha",
     });
 
@@ -37,7 +37,7 @@ describe("SessionRegistry", () => {
         contextKey: "100000000000000001:100000000000000101:100000000000000201",
         projectChannelId: "100000000000000101",
         threadId: "100000000000000201",
-        workspace: "C:\\codex_works\\Codex_Discord_BOT",
+        workspace: "C:\\workspace\\Codex_Discord_BOT",
         workerId: "worker-alpha",
         workerSessionId: "worker-session-1",
         codexThreadId: "codex-thread-1",

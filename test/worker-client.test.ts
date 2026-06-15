@@ -31,7 +31,7 @@ describe("WorkerClient", () => {
       expect(await readBody(req)).toBe("{}");
       sendJson(res, 200, {
         ok: true,
-        data: { sessionId: "worker-session-1", info: { threadId: null, workspace: "E:\\codex_works" } },
+        data: { sessionId: "worker-session-1", info: { threadId: null, workspace: "E:\\workspace-home" } },
       });
     });
 
