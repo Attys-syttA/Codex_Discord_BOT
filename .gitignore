@@ -18,6 +18,7 @@ logs/
 runtime/
 tmp/
 temp/
+.serena/
 
 .DS_Store
 Thumbs.db
