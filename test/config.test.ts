@@ -52,7 +52,17 @@ describe("loadConfig", () => {
       label: "Home worker",
       baseUrl: "http://127.0.0.1:8787",
     });
+    expect(config.approvalTtlMs).toBe(1_800_000);
     expect(config.sessionStorePath).toBe(".discord-bot-state/sessions.json");
+  });
+
+  it("accepts a custom approval ttl", () => {
+    const config = loadConfig({
+      ...baseEnv,
+      DISCORD_APPROVAL_TTL_MS: "60000",
+    }, { configDir: CONFIG_DIR });
+
+    expect(config.approvalTtlMs).toBe(60_000);
   });
 
   it("accepts a custom session store path", () => {

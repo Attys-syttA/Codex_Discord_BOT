@@ -1,5 +1,19 @@
 # TypeScript Skeleton Terv: `Codex_Discord_BOT`
 
+Allapot: done / lezart korai alapozasi terv
+
+Kapcsolodo jelenlegi helyzet:
+- Ez a dokumentum mar nem aktiv foirany, mert a skeleton-felepites gyakorlati reszei megtortentek.
+- A repo a tervben leirt kezdeti alapszintet mar meghaladta.
+
+Elkeszult reszek:
+- A TypeScript projektvaz elkeszult.
+- A config parser, Discord context kezeles es worker kliens alapjai bekerultek.
+- A korai teszt- es buildalap letrejott.
+
+Nyitott reszek:
+- Nincs nyitott megvalositasi tetel ebben a fajlban; torteneti alapozasi dokumentumkent marad meg.
+
 ## Summary
 
 A skeleton célja egy különálló, moduláris Discord ChatOps bridge alap létrehozása, amely **nem Telegram-átírás**, hanem Discord-native modellre épül:

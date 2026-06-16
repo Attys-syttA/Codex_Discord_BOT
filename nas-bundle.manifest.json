@@ -1,0 +1,19 @@
+{
+  "packageName": "codex-discord-bot-nas-bridge",
+  "include": [
+    "package.json",
+    "package-lock.json",
+    "tsconfig.json",
+    "src/**"
+  ],
+  "forbiddenPackageEntries": [
+    ".env",
+    ".env.*",
+    ".discord-bot-state",
+    "discord_nas_bridge/app",
+    "discord_nas_bridge/data",
+    "dist",
+    "node_modules",
+    "test"
+  ]
+}

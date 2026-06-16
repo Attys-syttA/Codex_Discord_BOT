@@ -40,6 +40,136 @@ describe("WorkerClient", () => {
     await expect(client.createSession()).resolves.toMatchObject({ sessionId: "worker-session-1" });
   });
 
+  it("lists worker sessions with GET /sessions", async () => {
+    const { baseUrl } = await startMockServer((req, res) => {
+      expect(req.method).toBe("GET");
+      expect(req.url).toBe("/sessions");
+      sendJson(res, 200, {
+        ok: true,
+        data: [
+          {
+            sessionId: "worker-session-1",
+            info: { threadId: "codex-thread-1", workspace: "E:\\workspace-home" },
+          },
+        ],
+      });
+    });
+
+    const client = new WorkerClient({ worker: { id: "otthon", label: "Otthon", baseUrl } });
+
+    await expect(client.listSessions()).resolves.toEqual([
+      {
+        sessionId: "worker-session-1",
+        info: { threadId: "codex-thread-1", workspace: "E:\\workspace-home" },
+      },
+    ]);
+  });
+
+  it("gets worker session status with GET /sessions/:id/status", async () => {
+    const { baseUrl } = await startMockServer((req, res) => {
+      expect(req.method).toBe("GET");
+      expect(req.url).toBe("/sessions/worker-session-1/status");
+      sendJson(res, 200, { ok: true, data: { status: "running", queueDepth: 0 } });
+    });
+
+    const client = new WorkerClient({ worker: { id: "otthon", label: "Otthon", baseUrl } });
+
+    await expect(client.getSessionStatus("worker-session-1")).resolves.toEqual({ status: "running", queueDepth: 0 });
+  });
+
+  it("uses the dedicated tests endpoint for the tests check", async () => {
+    const { baseUrl } = await startMockServer(async (req, res) => {
+      expect(req.method).toBe("POST");
+      expect(req.url).toBe("/sessions/worker-session-1/checks/tests");
+      expect(await readBody(req)).toBe("{}");
+      sendJson(res, 200, {
+        ok: true,
+        data: { name: "tests", ok: true, summary: "All checks passed." },
+      });
+    });
+
+    const client = new WorkerClient({ worker: { id: "otthon", label: "Otthon", baseUrl } });
+
+    await expect(client.runNamedCheck("worker-session-1", "tests")).resolves.toEqual({
+      name: "tests",
+      ok: true,
+      summary: "All checks passed.",
+    });
+  });
+
+  it("keeps generic named checks on the generic checks route", async () => {
+    const { baseUrl } = await startMockServer(async (req, res) => {
+      expect(req.method).toBe("POST");
+      expect(req.url).toBe("/sessions/worker-session-1/checks/lint");
+      expect(await readBody(req)).toBe("{}");
+      sendJson(res, 200, {
+        ok: true,
+        data: { name: "lint", ok: true, summary: "Lint passed." },
+      });
+    });
+
+    const client = new WorkerClient({ worker: { id: "otthon", label: "Otthon", baseUrl } });
+
+    await expect(client.runNamedCheck("worker-session-1", "lint")).resolves.toEqual({
+      name: "lint",
+      ok: true,
+      summary: "Lint passed.",
+    });
+  });
+
+  it("gets repo status with GET /sessions/:id/repo-status", async () => {
+    const { baseUrl } = await startMockServer((req, res) => {
+      expect(req.method).toBe("GET");
+      expect(req.url).toBe("/sessions/worker-session-1/repo-status");
+      sendJson(res, 200, {
+        ok: true,
+        data: { workspace: "E:\\workspace-home", branch: "main", clean: true, summary: "clean" },
+      });
+    });
+
+    const client = new WorkerClient({ worker: { id: "otthon", label: "Otthon", baseUrl } });
+
+    await expect(client.getRepoStatus("worker-session-1")).resolves.toEqual({
+      workspace: "E:\\workspace-home",
+      branch: "main",
+      clean: true,
+      summary: "clean",
+    });
+  });
+
+  it("gets last response with GET /sessions/:id/last-response", async () => {
+    const { baseUrl } = await startMockServer((req, res) => {
+      expect(req.method).toBe("GET");
+      expect(req.url).toBe("/sessions/worker-session-1/last-response");
+      sendJson(res, 200, {
+        ok: true,
+        data: { text: "Last worker answer" },
+      });
+    });
+
+    const client = new WorkerClient({ worker: { id: "otthon", label: "Otthon", baseUrl } });
+
+    await expect(client.getLastResponse("worker-session-1")).resolves.toEqual({ text: "Last worker answer" });
+  });
+
+  it("submits approval decisions with POST /sessions/:id/approval", async () => {
+    const { baseUrl } = await startMockServer(async (req, res) => {
+      expect(req.method).toBe("POST");
+      expect(req.url).toBe("/sessions/worker-session-1/approval");
+      expect(await readBody(req)).toBe("{\"approvalId\":\"12\",\"approved\":true,\"scope\":\"once\"}");
+      sendJson(res, 200, {
+        ok: true,
+        data: { accepted: true },
+      });
+    });
+
+    const client = new WorkerClient({ worker: { id: "otthon", label: "Otthon", baseUrl } });
+
+    await expect(
+      client.submitApprovalDecision("worker-session-1", { approvalId: "12", approved: true, scope: "once" }),
+    ).resolves.toEqual({ accepted: true });
+  });
+
   it("sends the shared secret header when configured", async () => {
     const { baseUrl } = await startMockServer((req, res) => {
       expect(req.headers["x-telecodex-shared-secret"]).toBe("TEST_ONLY_WORKER_SHARED_SECRET");

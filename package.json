@@ -15,15 +15,23 @@
     "test": "vitest run",
     "check": "npm run typecheck && npm test && npm run build",
     "check:workspace": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-workspace.ps1",
+    "mcp:duplicates:list": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/cleanup-mcp-duplicates.ps1 -ListOnly",
+    "mcp:duplicates:clean": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/cleanup-mcp-duplicates.ps1",
+    "plans:check": "node scripts/check-active-plan-status-blocks.mjs",
     "audit:deps": "npm audit --audit-level=high",
+    "nas:inventory:check": "node scripts/nas-runtime-inventory-check.mjs",
+    "nas:inventory:write": "node scripts/nas-runtime-inventory-check.mjs --write",
+    "nas:bundle:check": "node scripts/build-nas-bundle.mjs",
     "nas:bundle:prepare": "node scripts/prepare-nas-bundle.mjs",
     "nas:bundle:docker-build": "docker build -f discord_nas_bridge/Dockerfile -t codex-discord-bridge:nas-bundle discord_nas_bridge",
     "secret:scan": "ggshield secret scan path --recursive --yes --use-gitignore ."
   },
   "dependencies": {
+    "better-sqlite3": "^12.10.1",
     "discord.js": "^14.26.4"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.9.3",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",

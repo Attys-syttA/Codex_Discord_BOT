@@ -15,6 +15,7 @@ Ez a mappa a NAS-on futtatando Discord bridge csomag helye.
 - `.env.nas.example`: minta konfiguracio fake ertekekkel
 - `.dockerignore`: kizarja a valodi `.env.nas` fajlt a Docker build contextbol
 - `app/`: generalt build bundle, amelyet feltoltes elott a `scripts/prepare-nas-bundle.ps1` keszit el
+- `app/`: generalt build bundle, amelyet feltoltes elott a NAS inventory + bundle check utan a `scripts/prepare-nas-bundle.ps1` keszit el
 - `data/`: helyi runtime allapot, peldaul `sessions.json`
 
 ## Elso inditas NAS-on
@@ -23,6 +24,14 @@ Ez a mappa a NAS-on futtatando Discord bridge csomag helye.
 
 ```powershell
 .\scripts\prepare-nas-bundle.ps1
+
+Javasolt ellenorzesi sorrend:
+
+```powershell
+npm run nas:inventory:check
+npm run nas:bundle:check
+npm run nas:bundle:prepare
+```
 ```
 
 2. Toltsd fel a teljes `discord_nas_bridge` mappat a NAS megosztott mappajaba. Fontos, hogy az `app/` almappa is felkeruljon.
@@ -90,6 +99,6 @@ Ha ez nincs megadva, a bot eloszor a `.env`, utana a `.env.nas` fajlt keresi.
 
 - A `.env.nas` fajlt soha ne commitold.
 - A `/data/sessions.json` runtime allapot, nem forraskod.
-- Az `app/` generalt deploy bundle. Ha kodot modositasz, futtasd ujra a `scripts/prepare-nas-bundle.ps1` scriptet es toltsd fel ujra a mappat.
+- Az `app/` generalt deploy bundle. Ha kodot modositasz, elobb ellenorizd a NAS inventory-t es a dry-run bundle-t, utana futtasd ujra a `scripts/prepare-nas-bundle.ps1` scriptet es toltsd fel ujra a mappat.
 - A kontener csak a Discord bridge-et inditja ujra. A worker PC ujrainditasa kulon, kesobbre tervezendo feladat.
 - A `docker compose config` valos `.env.nas` mellett kiirhat tokeneket es shared secretet, ezert csak fake/example env-vel hasznald.

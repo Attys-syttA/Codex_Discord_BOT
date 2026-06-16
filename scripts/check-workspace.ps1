@@ -7,7 +7,10 @@ try {
   npm run typecheck
   npm test
   npm run build
+  npm run plans:check
   npm run audit:deps
+  npm run nas:inventory:check
+  npm run nas:bundle:check
   npm run nas:bundle:prepare
   git diff --check
 

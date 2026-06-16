@@ -1,0 +1,10 @@
+{
+  "files": [
+    "package.json",
+    "package-lock.json",
+    "tsconfig.json"
+  ],
+  "directories": [
+    "src"
+  ]
+}

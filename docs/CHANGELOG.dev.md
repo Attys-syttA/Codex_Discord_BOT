@@ -2,6 +2,142 @@
 
 Append-only development log for `Codex_Discord_BOT`.
 
+## 2026-06-16 12:10 +02:00
+
+- Cel: Lathatova tenni, ha a helyi tarolt Codex thread-kep es a worker altal jelentett elo thread-kep szetcsuszik.
+- Modositott fajlok: `src/core/orchestrator.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test -- test/worker-client.test.ts test/command-handlers.test.ts`; `npm run build`.
+- Eredmeny: A `/session` most mar kulon mutatja a tarolt thread ID-t es a worker thread ID-t, valamint jelzi, hogy a ket oldal `aligned` vagy `different`. A `/sessions` nezet a helyi session-sorokban is meg tudja jeleniteni a worker-threadet, es `thread drift` megjegyzest ad, ha a ket oldal eltér. Ez recovery, handoff es ujracsatlakozasi helyzetben sokkal gyorsabban ertelmezhetove teszi az allapotot.
+- Nyitott follow-up: a kovetkezo magasabb erteku kulso lepes mar inkabb a valodi worker implementacio oldala, vagy egy kesobbi UX-korben a deny utani queue-strategia veglegesitese.
+
+## 2026-06-16 12:07 +02:00
+
+- Cel: Egymas utan tovabb erositeni a worker Tier-2 szerzodes Discord-oldali lefedettseget, majd erre raepitve kompaktabb operatori `/session` nezetet adni.
+- Modositott fajlok: `src/core/orchestrator.ts`, `test/worker-client.test.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test -- test/worker-client.test.ts test/command-handlers.test.ts`; `npm run build`.
+- Eredmeny: A worker kliens mar kulon tesztekkel fedi a `GET /sessions/:id/repo-status`, `GET /sessions/:id/last-response` es `POST /sessions/:id/approval` utvonalakat is. A `/git-status` most mar egyertelmuen jelzi a forrast vagy a kieses okat, a `/session` pedig kompaktabb operatori panel lett: felul latszik a tarolt statusz, a pending approvalok szama es a queue allapota, alatta a worker-session es a live worker-statusz.
+- Nyitott follow-up: a megmaradt kulso hiany mar egyre inkabb a valodi worker implementacio oldalán van, illetve kesobbi polish lehet a local es worker thread-azonosito-nezet meg tudatosabb kezelese.
+
+## 2026-06-16 12:05 +02:00
+
+- Cel: A `/sessions` ne csak ket lista osszefuzese legyen, hanem gyors operatori attekintes a helyi es worker-oldali session-keprol.
+- Modositott fajlok: `src/core/orchestrator.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test -- test/command-handlers.test.ts`; `npm run build`.
+- Eredmeny: A `/sessions` most mar kulon mutatja a tarolt helyi sessionok es a worker altal lathato sessionok darabszamat, megjeloli az aktualis kontextus helyi sessionjet, es tisztabban valasztja szet a local-store illetve worker-live nezetet. Ezzel a parancs kozelebb kerult egy tenyleges operatori panelhez.
+- Nyitott follow-up: tovabbi polish lehet a helyi es worker-oldali thread-azonositok kozti elteres tudatosabb jelzese, hogy recovery vagy handoff helyzetben is egybol ertelmezheto legyen.
+
+## 2026-06-16 11:56 +02:00
+
+- Cel: A mixed prompt flowban formalizalni, mi tortenjen, ha egy session approvalra var, es kozben uj prompt erkezik.
+- Modositott fajlok: `src/core/orchestrator.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test -- test/command-handlers.test.ts`; `npm run build`.
+- Eredmeny: Approval-varakozas alatt az uj promptok most mar determinisztikusan queue-ba kerulnek, nem inditanak uj konkurens turnt. Approval utan vagy lazy expiry utan a varakozo queue automatikusan tovabb tud futni. A tesztek ezt kulon rogzitik a varakozas alatti queue-zasra es az approval utani queue-drainre is.
+- Nyitott follow-up: kesobbi UX-polish dontes marad, hogy deny utan a mar bent levo queue azonnal fusson-e tovabb, vagy inkabb csak kovetkezo user-akcio utan induljon.
+
+## 2026-06-16 12:40 +02:00
+
+- Cel: A `/doctor` es `/last` ne csak mukodjon, hanem operatori szemmel egyertelmubben mutassa, honnan jon az allapot- es valaszinformacio.
+- Modositott fajlok: `src/core/orchestrator.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test -- test/command-handlers.test.ts`; `npm run build`.
+- Eredmeny: A `/doctor` most mar kulon sorban mutatja a worker health-et es a worker session visibility allapotot, valamint a helyi session-szamot is. A `/last` most mar egyertelmuen jelzi, hogy a megjelenitett tartalom helyi preview-bol, worker last-response-bol, vagy egyikbol sem szarmazik, es hiba eseten is olvashatobb fallback szoveget ad.
+- Nyitott follow-up: a kovetkezo onallo szelet lehet a queue es approval kolcsonhatas szabalyanak formalizalasa, vagy a megmaradt worker Tier-2 hianyok tovabbi Discord-oldali elokeszitese.
+
+## 2026-06-16 12:16 +02:00
+
+- Cel: A worker-oldali Tier-2 szerzodes Discord-oldali eloigazitasat tovabb erositeni, es a worker session-statusz kiirasat ertelmezhetobbe tenni.
+- Modositott fajlok: `src/worker/worker-client.ts`, `src/core/orchestrator.ts`, `test/worker-client.test.ts`, `test/command-handlers.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test -- test/worker-client.test.ts`; `npm test -- test/command-handlers.test.ts test/worker-client.test.ts`; `npm run build`.
+- Eredmeny: A `tests` nevű built-in worker check most mar a dedikalt `/sessions/:id/checks/tests` utvonalat hasznalja, mikozben az altalanos nev szerinti checkekhez megmarad a generikus `/checks/:name` forma. Emellett a worker session-statuszok megjelenitese most mar a preferalt `status`, `state`, `mode`, `phase` mezokre tamaszkodik, es a `/sessions` lista is tisztabban mutatja a worker altal jelentett elo allapotot.
+- Nyitott follow-up: a kovetkezo szeletben vagy a megmaradt Tier-2 endpointok Discord-oldali finomitasa, vagy a `/doctor` es `/last` tovabbi operatori erosítese kovetkezzen.
+
+## 2026-06-16 11:52 +02:00
+
+- Cel: Az approval workflow alapjait valodi, auditolhato es lejaro allapotgeppe erositeni worker nelkuli tesztelhetoseggel.
+- Modositott fajlok: `src/config.ts`, `src/core/orchestrator.ts`, `src/db/sqlite-store.ts`, `src/bot/discord-bot.ts`, `test/config.test.ts`, `test/session-registry.test.ts`, `test/command-handlers.test.ts`, `docs/codex-tasks/plans/pending/active/Terv_Codex_Discord_BOT_fejlesztés.md`, `docs/codex-tasks/plans/pending/active/discord-platform-development-plan.md`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test -- test/config.test.ts test/session-registry.test.ts test/command-handlers.test.ts`; `npm test`; `npm run build`; `npm run plans:check`; `git diff --check`.
+- Eredmeny: Bekerult a `DISCORD_APPROVAL_TTL_MS` konfiguracio 30 perces defaulttal, a pending approvalok lazy expiry alapon lejarnak, a Discord approval uzenet ID-je visszakerul az SQLite rekordba, az audit log vegre tenylegesen hasznalatba kerult, es a lejart approval nem hagyja bent a sessiont `waiting_approval` allapotban. A `/doctor` es `/status` most konzisztensebben mutatja a pending approval es auto-approve helyzetet.
+- Nyitott follow-up: a kovetkezo nagy fejlesztesi szelet a worker-oldali Tier-2 endpointok tenyleges szerzodeses kiegeszitese.
+
+## 2026-06-16 08:48 +02:00
+
+- Cel: A szetesett karakterkodolasu aktiv fejlesztesi terv legyen ujra jol olvashato es konzisztens.
+- Modositott fajlok: `docs/codex-tasks/plans/pending/active/Terv_Codex_Discord_BOT_fejlesztés.md`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm run plans:check`; `git diff --check`.
+- Eredmeny: A tagabb, tegnap elkezdett fejlesztesi terv tiszta angol szovegre lett atirva, megorizve a tenyleges tartalmat es a statuszblokkot. A korabbi hibas karakterkodolas mar nem zavarja az olvasast vagy a tovabbi tervezest.
+- Nyitott follow-up: ha akarod, a masik aktiv tervet is hozza lehet igazítani ugyanilyen stilusban, hogy a ket dokumentum nyelve es szerkezete teljesen egyseges legyen.
+
+## 2026-06-16 08:52 +02:00
+
+- Cel: Az eredeti, projektet indito aktiv terv is ugyanarra a tiszta, osszehasonlithato stilusra keruljon.
+- Modositott fajlok: `docs/codex-tasks/plans/pending/active/discord-platform-development-plan.md`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm run plans:check`; `git diff --check`.
+- Eredmeny: Az indulasi Discord platformterv is ujra lett szerkesztve tiszta angol szovegre. A ket aktiv terv most mar egyforma szerkezetben mutatja a szerepet, az elkeszult reszeket es a nyitott iranyokat.
+- Nyitott follow-up: a ket terv alapjan most mar erdemes egy konkret kovetkezo fejlesztesi sorrendet rogzitani, hogy ne csak dokumentaciosan, hanem implementaciosan is egy iranyba mutassanak.
+
+## 2026-06-16 11:00 +02:00
+
+- Cel: A Discord repohoz keszuljon egy konkret worker API matrix, ami a jelenlegi kod alapjan megmutatja, mit var mar a bridge a worker oldaltol.
+- Modositott fajlok: `docs/codex-tasks/plans/pending/reference/discord_worker_api_matrix.md`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`, `nas-runtime-inventory.json`.
+- Futtatott parancsok: kodfelmeres a `src/core/orchestrator.ts`, `src/worker/worker-client.ts`, `src/bot/command-definitions.ts`, `src/bot/discord-bot.ts`, `test/command-handlers.test.ts` fajlokban; `npm run nas:inventory:write`; `npm run nas:inventory:check`; `git diff --check`.
+- Eredmeny: Letrejott egy hasznalhato referenciajegyzet, amely endpointonkent szetvalasztja a jelenlegi core worker API igenyeket, a mar user-visible, de meg opcionalkent kezelt endpointokat, valamint a hosszabb tavu, `codex-discord`-szerubb control-center funkcionalitashoz fontos endpointokat. Ezzel a kovetkezo fejlesztesi kor mar nem altalanos otleteles, hanem konkret worker-szerzodes szerinti haladas lehet.
+- Nyitott follow-up: a matrix alapjan a worker-oldali implementacios hianyok bezarasa, majd utana a Discord oldali `/sessions`, `/session` es approval UX tovabbi erositesenek utemezese.
+
+## 2026-06-16 11:18 +02:00
+
+- Cel: A Discord bridge session-nezete mar ne csak a helyi SQLite allapotot mutassa, hanem ahol lehet, vonjon be elo worker-adatot is.
+- Modositott fajlok: `src/core/orchestrator.ts`, `test/command-handlers.test.ts`, `test/worker-client.test.ts`, `docs/codex-tasks/plans/pending/active/Terv_Codex_Discord_BOT_fejlesztés.md`, `docs/codex-tasks/plans/pending/active/discord-platform-development-plan.md`, `docs/codex-tasks/plans/pending/reference/discord_worker_api_matrix.md`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test`; `npm run build`; `npm run plans:check`; `git diff --check`.
+- Eredmeny: A `/session` most mar megprobalja megjeleniteni a worker altal jelentett elo session-statuszt is, a `/sessions` pedig a tarolt helyi sessionok melle worker-reported sessionlistat is tesz, ha a worker tamogatja. Ezzel a bridge egy lepessel kozelebb kerult a `codex-discord`-szeru operatori session-latashoz.
+- Nyitott follow-up: a worker-statusz formatumot erdemes kesobb formalizalni, a worker-lista nezetet pedig tovabb lehet erositeni reszletesebb, normalizalt allapotinformacioval.
+
+## 2026-06-16 08:41 +02:00
+
+- Cel: Legyen egy biztonsagos, ujrafuttathato helyi takaritoeszkoz a duplikalt MCP folyamatfakhoz.
+- Modositott fajlok: `package.json`, `scripts/cleanup-mcp-duplicates.ps1`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`, `nas-runtime-inventory.json`.
+- Futtatott parancsok: helyi folyamatfa-felmeres PowerShell-lel; `npm run mcp:duplicates:list`; `npm run mcp:duplicates:clean`; `npm run nas:inventory:write`; `npm run nas:inventory:check`.
+- Eredmeny: Bekerult egy PowerShell szkript, ami a duplikalt `serena` es `server-filesystem` MCP folyamatfakbol egy mukodo gyokerfat meghagy, a tobbi azonos masolatot pedig leallitja. Kaptal hozza ket egyszeru `npm` parancsot is: egy listazo es egy tenyleges takarito modot.
+- Nyitott follow-up: ha kesobb mas MCP-szervereknel is megjelenik ugyanez a problema, a szkript mintaja bovitheto uj folyamatmintakkal.
+
+## 2026-06-15 12:30 +02:00
+
+- Cel: A pilotot tenyleges Discord vezerlokozpontta kezdeni boviteni a referencia-kod mintaja alapjan, a NAS bridge + kulon worker modell megtartasaval.
+- Modositott fajlok: `package.json`, `package-lock.json`, `.env.example`, `README.md`, `discord_nas_bridge/.env.nas.example`, `discord_nas_bridge/bundle-manifest.json`, `scripts/prepare-nas-bundle.mjs`, `src/index.ts`, `src/config.ts`, `src/command-definitions.ts`, `src/discord-bot.ts`, `src/command-handlers.ts`, `src/worker-client.ts`, `src/bot/*`, `src/core/*`, `src/db/*`, `src/security/*`, `test/command-handlers.test.ts`, `test/session-registry.test.ts`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm install better-sqlite3`; `npm install -D @types/better-sqlite3`; `npm run typecheck`; `npm test`.
+- Eredmeny: Bekerult az SQLite allapottar, a worker-aware orchestration, a normal uzenetes promptflow, a queue alap, az approval-alapok es a bovitett slash parancskeszlet. A NAS bundle mar manifest-alapu listabol epul, igy uj top-level runtime elem csak tudatos listabovites utan marad bent a csomagban.
+- Nyitott follow-up: privat Discord guildos smoke, majd worker oldali opcionas endpointok tenyleges bekotese ott, ahol a bridge most meg oszinten "nem elerheto ezen a workeren" uzenetet ad.
+
+## 2026-06-15 13:05 +02:00
+
+- Cel: A Discord repo NAS csomagolojat felhozni arra a szintre, mint amit reggel az `AttysCodexBridge_NAS` es korabban az `email_header_analyzer` hasznal.
+- Modositott fajlok: `AGENTS.md`, `package.json`, `README.md`, `discord_nas_bridge/README.hu.md`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`, `scripts/check-workspace.ps1`, `scripts/prepare-nas-bundle.mjs`, `scripts/nas-runtime-inventory-check.mjs`, `scripts/build-nas-bundle.mjs`, `nas-bundle.manifest.json`, `nas-runtime-inventory.json`, `test/nas-runtime-inventory.test.ts`.
+- Futtatott parancsok: `npm run nas:inventory:write`; `npm run nas:inventory:check`; `npm run nas:bundle:check`; `npm run nas:bundle:prepare`; plusz teljes validacio a zaraskor.
+- Eredmeny: A Discord oldalon most mar nem csak egyszeru fajllista van, hanem verziokezelt inventory, besorolas-ellenorzes, dry-run bundle check es build workflow is. Uj vagy atnevezett fajl nem maradhat csendben besorolas nelkul.
+- Nyitott follow-up: ha a NAS payload kesobb bovitest kap, minden uj top-level runtime elemhez egyszerre kell frissiteni a manifestet es az inventory-t.
+
+## 2026-06-15 13:20 +02:00
+
+- Cel: Az uj NAS inventory szabaly es a publikus-repo adat-higienia egyertelmuen bekeruljon a helyi szabalyzatba.
+- Modositott fajlok: `AGENTS.md`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: szabalyzat-ellenorzes es dokumentacios frissites.
+- Eredmeny: Az `AGENTS.md` most mar kulon kimondja, hogy a file-add/rename/move/reclassification munka nem tekintheto kesznek, amig a NAS inventory ujra zold nem lett. Emellett kulon publikus-repo higieniai szabaly is bekerult, hogy a frissen megtisztitott tracked fajlokba ne csusszanak vissza valosnak tuno azonosito-, path-, host-, token- vagy szemelyes uzemeltetesi adatok.
+- Nyitott follow-up: commit elott erdemes majd egy ujabb gyors privatadat-spot-checket is lefuttatni, ha docs/test/example konfig fajlokhoz nyulunk.
+
+## 2026-06-15 13:40 +02:00
+
+- Cel: Az `email_header_analyzer` repohoz hasonloan szigoritani a terv- es taskfajlok kezeleset a Discord repoban is.
+- Modositott fajlok: `AGENTS.md`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`, `docs/TERV_STATUS_SABLON.md`, `docs/codex-tasks/README.md`, `docs/codex-tasks/plans/pending/README.md`, valamint a jelenlegi aktiv tervfajlok helye es allapotblokkja.
+- Futtatott parancsok: tervtar-felmeres, szabalyfrissites, aktiv tervfajlok allapotblokkal valo kiegeszitese.
+- Eredmeny: A repo most mar kulon szabalyban kezeli, hogy mi aktiv terv, mi meg nem indult terv, mi referenciaanyag, es mi lezart terv. Az aktiv tervfajlok elejere kotelezo lett az `Elkeszult reszek` es `Nyitott reszek` blokk.
+- Nyitott follow-up: a kesobbi uj tervfajloknal tartsuk meg ezt a mappafegyelmet, es a nagyobb lezarasoknal mozogjanak at a megfelelo `done` helyre.
+
+## 2026-06-15 12:57 +02:00
+
+- Cel: Az aktiv tervfajlok statuszblokkjanak ellenorzeset automatikussa tenni.
+- Modositott fajlok: `package.json`, `AGENTS.md`, `scripts/check-workspace.ps1`, `scripts/check-active-plan-status-blocks.mjs`, `test/check-active-plan-status-blocks.test.ts`, `docs/codex-tasks/README.md`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`, `nas-runtime-inventory.json`.
+- Futtatott parancsok: `npm run plans:check`; `npm test -- test/check-active-plan-status-blocks.test.ts test/nas-runtime-inventory.test.ts`; `npm run build`; `npm run nas:inventory:write`.
+- Eredmeny: Az aktiv `docs/codex-tasks/plans/pending/active/` tervfajlok most mar kulon script alapjan ellenorzodnek. A check azt varja el, hogy a fajl elejen ott legyen az `Allapot`, `Kapcsolodo jelenlegi helyzet`, `Elkeszult reszek` es `Nyitott reszek` blokk. A workspace check ezt automatikusan futtatja.
+- Nyitott follow-up: ha kesobb akarjuk, ugyanez a checker tovabb bovitheto arra is, hogy a nem megfelelo mappaba tett tervfajlakat is jelezze.
+
 ## 2026-06-15 09:10 +02:00
 
 - Cel: A kovetett fajlokbol kivenni a publikus repoba nem valo privat azonosito-maradvanyokat ugy, hogy a bot mukodese ne seruljon.

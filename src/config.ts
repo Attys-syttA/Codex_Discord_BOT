@@ -30,6 +30,10 @@ export interface DiscordBridgeConfig {
   autoWorkspaceAliases: Map<string, string>;
   ephemeralResponses: boolean;
   workerTimeoutMs: number;
+  approvalTtlMs: number;
+  queueMaxItems: number;
+  enableMessagePrompts: boolean;
+  databasePath: string;
   sessionStorePath: string;
 }
 
@@ -60,6 +64,23 @@ export function loadConfig(
     120_000,
     "DISCORD_WORKER_TIMEOUT_MS",
   );
+  const approvalTtlMs = parsePositiveInteger(
+    optionalEnv(env, "DISCORD_APPROVAL_TTL_MS"),
+    1_800_000,
+    "DISCORD_APPROVAL_TTL_MS",
+  );
+  const queueMaxItems = parsePositiveInteger(
+    optionalEnv(env, "DISCORD_QUEUE_MAX_ITEMS"),
+    10,
+    "DISCORD_QUEUE_MAX_ITEMS",
+  );
+  const enableMessagePrompts = parseBoolean(
+    optionalEnv(env, "DISCORD_ENABLE_MESSAGE_PROMPTS"),
+    true,
+    "DISCORD_ENABLE_MESSAGE_PROMPTS",
+  );
+  const databasePath = resolvePortablePath(optionalEnv(env, "DISCORD_DATABASE_PATH"), configDir)
+    ?? normalizePath(path.join(configDir, ".discord-bot-state", "bridge.sqlite"));
   const sessionStorePath = optionalEnv(env, "DISCORD_SESSION_STORE_PATH") ?? ".discord-bot-state/sessions.json";
 
   const workerIds = new Set(workers.map((worker) => worker.id));
@@ -85,6 +106,10 @@ export function loadConfig(
     autoWorkspaceAliases,
     ephemeralResponses,
     workerTimeoutMs,
+    approvalTtlMs,
+    queueMaxItems,
+    enableMessagePrompts,
+    databasePath,
     sessionStorePath,
   };
 }

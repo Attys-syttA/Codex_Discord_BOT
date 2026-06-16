@@ -1,0 +1,578 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-06-16T08:35:15.319Z",
+  "source": {
+    "fileSet": "repo-files-excluding-local-state-build-output-and-generated-nas-staging",
+    "dateField": "filesystem-mtime",
+    "hashPolicy": "not-recorded"
+  },
+  "packageEligibleFamilies": [
+    "runtime-required",
+    "runtime-optional",
+    "docs-payload"
+  ],
+  "families": {
+    "runtime-required": "Required for the NAS bridge runtime payload.",
+    "runtime-optional": "Needed for optional NAS runtime support or source bundle build input.",
+    "docs-payload": "Selected operator documentation or example files shipped with the NAS folder.",
+    "developer-only": "Repo-only source, tooling, or docs file.",
+    "test-only": "Test file not shipped in the bundle.",
+    "local-sensitive-forbidden": "Local env, secret, or runtime-state file.",
+    "excluded-generated": "Generated output or staging directory that must stay out of source packaging.",
+    "needs-classification": "New or changed file awaiting explicit NAS bundle classification."
+  },
+  "files": [
+    {
+      "path": ".dockerignore",
+      "name": ".dockerignore",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository-level file not needed inside the NAS runtime payload.",
+      "lastModifiedAt": "2026-06-14T12:23:14.000Z"
+    },
+    {
+      "path": ".env",
+      "name": ".env",
+      "family": "local-sensitive-forbidden",
+      "status": "classified",
+      "reason": "Local env or secret-bearing runtime file must stay out of the NAS bundle.",
+      "lastModifiedAt": "2026-06-15T07:07:53.603Z"
+    },
+    {
+      "path": ".env.example",
+      "name": ".env.example",
+      "family": "local-sensitive-forbidden",
+      "status": "classified",
+      "reason": "Local env or secret-bearing runtime file must stay out of the NAS bundle.",
+      "lastModifiedAt": "2026-06-15T10:23:10.413Z"
+    },
+    {
+      "path": ".gitattributes",
+      "name": ".gitattributes",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository-level file not needed inside the NAS runtime payload.",
+      "lastModifiedAt": "2026-06-14T14:15:04.000Z"
+    },
+    {
+      "path": ".github/SECURITY.md",
+      "name": "SECURITY.md",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository automation file.",
+      "lastModifiedAt": "2026-06-14T14:12:14.000Z"
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "name": "dependabot.yml",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository automation file.",
+      "lastModifiedAt": "2026-06-14T14:12:14.000Z"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "name": "ci.yml",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository automation file.",
+      "lastModifiedAt": "2026-06-14T14:15:04.000Z"
+    },
+    {
+      "path": ".gitignore",
+      "name": ".gitignore",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository-level file not needed inside the NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T07:27:54.302Z"
+    },
+    {
+      "path": "AGENTS.md",
+      "name": "AGENTS.md",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository-level file not needed inside the NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:55:36.800Z"
+    },
+    {
+      "path": "LICENSE",
+      "name": "LICENSE",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository-level file not needed inside the NAS runtime payload.",
+      "lastModifiedAt": "2026-06-14T10:28:58.000Z"
+    },
+    {
+      "path": "README.md",
+      "name": "README.md",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository-level file not needed inside the NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:35:20.628Z"
+    },
+    {
+      "path": "discord_nas_bridge/.dockerignore",
+      "name": ".dockerignore",
+      "family": "runtime-required",
+      "status": "classified",
+      "reason": "Required NAS bridge infrastructure file.",
+      "lastModifiedAt": "2026-06-14T13:53:14.000Z"
+    },
+    {
+      "path": "discord_nas_bridge/.env.nas",
+      "name": ".env.nas",
+      "family": "local-sensitive-forbidden",
+      "status": "classified",
+      "reason": "Local env or secret-bearing runtime file must stay out of the NAS bundle.",
+      "lastModifiedAt": "2026-06-15T07:07:08.828Z"
+    },
+    {
+      "path": "discord_nas_bridge/.env.nas.example",
+      "name": ".env.nas.example",
+      "family": "local-sensitive-forbidden",
+      "status": "classified",
+      "reason": "Local env or secret-bearing runtime file must stay out of the NAS bundle.",
+      "lastModifiedAt": "2026-06-15T10:23:10.413Z"
+    },
+    {
+      "path": "discord_nas_bridge/Dockerfile",
+      "name": "Dockerfile",
+      "family": "runtime-required",
+      "status": "classified",
+      "reason": "Required NAS bridge infrastructure file.",
+      "lastModifiedAt": "2026-06-14T16:14:42.000Z"
+    },
+    {
+      "path": "discord_nas_bridge/README.hu.md",
+      "name": "README.hu.md",
+      "family": "docs-payload",
+      "status": "classified",
+      "reason": "Operator-facing NAS example or guide shipped with the NAS folder.",
+      "lastModifiedAt": "2026-06-15T10:35:20.628Z"
+    },
+    {
+      "path": "discord_nas_bridge/bundle-manifest.json",
+      "name": "bundle-manifest.json",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Legacy source bundle manifest retained as a packaging guardrail input.",
+      "lastModifiedAt": "2026-06-15T10:23:10.412Z"
+    },
+    {
+      "path": "discord_nas_bridge/docker-compose.yml",
+      "name": "docker-compose.yml",
+      "family": "runtime-required",
+      "status": "classified",
+      "reason": "Required NAS bridge infrastructure file.",
+      "lastModifiedAt": "2026-06-14T16:00:36.000Z"
+    },
+    {
+      "path": "docs/CHANGELOG.dev.md",
+      "name": "CHANGELOG.dev.md",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository documentation not shipped as NAS runtime payload.",
+      "lastModifiedAt": "2026-06-16T08:35:08.806Z"
+    },
+    {
+      "path": "docs/STATE.md",
+      "name": "STATE.md",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository documentation not shipped as NAS runtime payload.",
+      "lastModifiedAt": "2026-06-16T08:35:08.806Z"
+    },
+    {
+      "path": "docs/TERV_STATUS_SABLON.md",
+      "name": "TERV_STATUS_SABLON.md",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository documentation not shipped as NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:48:42.917Z"
+    },
+    {
+      "path": "docs/codex-tasks/README.md",
+      "name": "README.md",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository documentation not shipped as NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:55:40.642Z"
+    },
+    {
+      "path": "docs/codex-tasks/plans/done/.gitkeep",
+      "name": ".gitkeep",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository documentation not shipped as NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:48:42.929Z"
+    },
+    {
+      "path": "docs/codex-tasks/plans/done/typescript_skeleton_terv.md",
+      "name": "typescript_skeleton_terv.md",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository documentation not shipped as NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:50:21.001Z"
+    },
+    {
+      "path": "docs/codex-tasks/plans/pending/README.md",
+      "name": "README.md",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository documentation not shipped as NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:48:42.918Z"
+    },
+    {
+      "path": "docs/codex-tasks/plans/pending/active/.gitkeep",
+      "name": ".gitkeep",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository documentation not shipped as NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:48:42.919Z"
+    },
+    {
+      "path": "docs/codex-tasks/plans/pending/active/Terv_Codex_Discord_BOT_fejlesztés.md",
+      "name": "Terv_Codex_Discord_BOT_fejlesztés.md",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository documentation not shipped as NAS runtime payload.",
+      "lastModifiedAt": "2026-06-16T07:32:19.320Z"
+    },
+    {
+      "path": "docs/codex-tasks/plans/pending/active/discord-platform-development-plan.md",
+      "name": "discord-platform-development-plan.md",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository documentation not shipped as NAS runtime payload.",
+      "lastModifiedAt": "2026-06-16T07:46:33.150Z"
+    },
+    {
+      "path": "docs/codex-tasks/plans/pending/not-started/.gitkeep",
+      "name": ".gitkeep",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository documentation not shipped as NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:48:42.919Z"
+    },
+    {
+      "path": "docs/codex-tasks/plans/pending/reference/.gitkeep",
+      "name": ".gitkeep",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository documentation not shipped as NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:48:42.929Z"
+    },
+    {
+      "path": "docs/codex-tasks/plans/pending/reference/codex_discord_comparison.md",
+      "name": "codex_discord_comparison.md",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository documentation not shipped as NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T09:21:53.994Z"
+    },
+    {
+      "path": "docs/codex-tasks/plans/pending/reference/discord_worker_api_matrix.md",
+      "name": "discord_worker_api_matrix.md",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository documentation not shipped as NAS runtime payload.",
+      "lastModifiedAt": "2026-06-16T08:34:52.107Z"
+    },
+    {
+      "path": "nas-bundle.manifest.json",
+      "name": "nas-bundle.manifest.json",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository-level file not needed inside the NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:34:51.156Z"
+    },
+    {
+      "path": "nas-runtime-inventory.json",
+      "name": "nas-runtime-inventory.json",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Versioned NAS runtime inventory used as packaging guardrail.",
+      "lastModifiedAt": "2026-06-16T06:42:18.161Z"
+    },
+    {
+      "path": "package-lock.json",
+      "name": "package-lock.json",
+      "family": "runtime-required",
+      "status": "classified",
+      "reason": "Required top-level NAS bundle source input.",
+      "lastModifiedAt": "2026-06-15T10:19:44.752Z"
+    },
+    {
+      "path": "package.json",
+      "name": "package.json",
+      "family": "runtime-required",
+      "status": "classified",
+      "reason": "Required top-level NAS bundle source input.",
+      "lastModifiedAt": "2026-06-16T06:42:13.526Z"
+    },
+    {
+      "path": "scripts/build-nas-bundle.mjs",
+      "name": "build-nas-bundle.mjs",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Packaging or repo helper script not shipped inside the NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:34:51.157Z"
+    },
+    {
+      "path": "scripts/check-active-plan-status-blocks.mjs",
+      "name": "check-active-plan-status-blocks.mjs",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Packaging or repo helper script not shipped inside the NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:56:01.372Z"
+    },
+    {
+      "path": "scripts/check-workspace.ps1",
+      "name": "check-workspace.ps1",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Packaging or repo helper script not shipped inside the NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:55:32.673Z"
+    },
+    {
+      "path": "scripts/cleanup-mcp-duplicates.ps1",
+      "name": "cleanup-mcp-duplicates.ps1",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Packaging or repo helper script not shipped inside the NAS runtime payload.",
+      "lastModifiedAt": "2026-06-16T06:42:13.527Z"
+    },
+    {
+      "path": "scripts/nas-runtime-inventory-check.mjs",
+      "name": "nas-runtime-inventory-check.mjs",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Packaging or repo helper script not shipped inside the NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:36:43.032Z"
+    },
+    {
+      "path": "scripts/prepare-nas-bundle.mjs",
+      "name": "prepare-nas-bundle.mjs",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Packaging or repo helper script not shipped inside the NAS runtime payload.",
+      "lastModifiedAt": "2026-06-15T10:34:51.157Z"
+    },
+    {
+      "path": "scripts/prepare-nas-bundle.ps1",
+      "name": "prepare-nas-bundle.ps1",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Packaging or repo helper script not shipped inside the NAS runtime payload.",
+      "lastModifiedAt": "2026-06-14T14:12:14.000Z"
+    },
+    {
+      "path": "src/bot/command-definitions.ts",
+      "name": "command-definitions.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-15T10:16:20.586Z"
+    },
+    {
+      "path": "src/bot/discord-bot.ts",
+      "name": "discord-bot.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-15T10:21:19.203Z"
+    },
+    {
+      "path": "src/command-definitions.ts",
+      "name": "command-definitions.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-15T10:16:20.587Z"
+    },
+    {
+      "path": "src/command-handlers.ts",
+      "name": "command-handlers.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-15T10:20:16.199Z"
+    },
+    {
+      "path": "src/config.ts",
+      "name": "config.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-15T10:15:03.313Z"
+    },
+    {
+      "path": "src/core/orchestrator.ts",
+      "name": "orchestrator.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-15T10:20:12.197Z"
+    },
+    {
+      "path": "src/core/types.ts",
+      "name": "types.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-15T10:14:56.860Z"
+    },
+    {
+      "path": "src/db/sqlite-store.ts",
+      "name": "sqlite-store.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-15T10:20:02.397Z"
+    },
+    {
+      "path": "src/discord-bot.ts",
+      "name": "discord-bot.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-15T10:19:08.615Z"
+    },
+    {
+      "path": "src/discord-context.ts",
+      "name": "discord-context.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-14T10:21:40.000Z"
+    },
+    {
+      "path": "src/env.ts",
+      "name": "env.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-15T07:24:33.873Z"
+    },
+    {
+      "path": "src/index.ts",
+      "name": "index.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-15T10:19:24.419Z"
+    },
+    {
+      "path": "src/security/access.ts",
+      "name": "access.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-15T10:16:20.586Z"
+    },
+    {
+      "path": "src/session-registry.ts",
+      "name": "session-registry.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-14T11:48:44.000Z"
+    },
+    {
+      "path": "src/worker-client.ts",
+      "name": "worker-client.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-15T10:15:55.487Z"
+    },
+    {
+      "path": "src/worker/worker-client.ts",
+      "name": "worker-client.ts",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Runtime source copied into the NAS build input bundle.",
+      "lastModifiedAt": "2026-06-15T10:15:55.485Z"
+    },
+    {
+      "path": "test/check-active-plan-status-blocks.test.ts",
+      "name": "check-active-plan-status-blocks.test.ts",
+      "family": "test-only",
+      "status": "classified",
+      "reason": "Test file not shipped in the NAS runtime bundle.",
+      "lastModifiedAt": "2026-06-15T10:55:24.635Z"
+    },
+    {
+      "path": "test/command-handlers.test.ts",
+      "name": "command-handlers.test.ts",
+      "family": "test-only",
+      "status": "classified",
+      "reason": "Test file not shipped in the NAS runtime bundle.",
+      "lastModifiedAt": "2026-06-15T10:21:54.806Z"
+    },
+    {
+      "path": "test/config.test.ts",
+      "name": "config.test.ts",
+      "family": "test-only",
+      "status": "classified",
+      "reason": "Test file not shipped in the NAS runtime bundle.",
+      "lastModifiedAt": "2026-06-15T07:30:45.231Z"
+    },
+    {
+      "path": "test/discord-context.test.ts",
+      "name": "discord-context.test.ts",
+      "family": "test-only",
+      "status": "classified",
+      "reason": "Test file not shipped in the NAS runtime bundle.",
+      "lastModifiedAt": "2026-06-15T07:24:06.439Z"
+    },
+    {
+      "path": "test/env.test.ts",
+      "name": "env.test.ts",
+      "family": "test-only",
+      "status": "classified",
+      "reason": "Test file not shipped in the NAS runtime bundle.",
+      "lastModifiedAt": "2026-06-15T07:24:33.873Z"
+    },
+    {
+      "path": "test/nas-runtime-inventory.test.ts",
+      "name": "nas-runtime-inventory.test.ts",
+      "family": "test-only",
+      "status": "classified",
+      "reason": "Test file not shipped in the NAS runtime bundle.",
+      "lastModifiedAt": "2026-06-15T10:38:38.718Z"
+    },
+    {
+      "path": "test/session-registry.test.ts",
+      "name": "session-registry.test.ts",
+      "family": "test-only",
+      "status": "classified",
+      "reason": "Test file not shipped in the NAS runtime bundle.",
+      "lastModifiedAt": "2026-06-15T10:21:02.662Z"
+    },
+    {
+      "path": "test/worker-client.test.ts",
+      "name": "worker-client.test.ts",
+      "family": "test-only",
+      "status": "classified",
+      "reason": "Test file not shipped in the NAS runtime bundle.",
+      "lastModifiedAt": "2026-06-15T07:30:45.232Z"
+    },
+    {
+      "path": "tsconfig.json",
+      "name": "tsconfig.json",
+      "family": "runtime-optional",
+      "status": "classified",
+      "reason": "Optional NAS packaging support input.",
+      "lastModifiedAt": "2026-06-15T10:38:38.717Z"
+    },
+    {
+      "path": "vitest.config.ts",
+      "name": "vitest.config.ts",
+      "family": "developer-only",
+      "status": "classified",
+      "reason": "Repository-level file not needed inside the NAS runtime payload.",
+      "lastModifiedAt": "2026-06-14T10:21:40.000Z"
+    }
+  ]
+}
