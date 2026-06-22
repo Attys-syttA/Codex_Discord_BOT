@@ -27,7 +27,7 @@
     "secret:scan": "ggshield secret scan path --recursive --yes --use-gitignore ."
   },
   "dependencies": {
-    "better-sqlite3": "^12.10.1",
+    "better-sqlite3": "^12.11.1",
     "discord.js": "^14.26.4"
   },
   "devDependencies": {
