@@ -2,7 +2,7 @@
 
 ## Current status
 
-- Date: 2026-06-16
+- Date: 2026-06-17
 - Repository: `Codex_Discord_BOT`
 - Phase: Discord control-center expansion on top of the pilot
 - Runtime code: slash + normal message prompt flow, worker-backed session handling, SQLite state store, queue basics, hardened approval workflow, NAS Docker bridge
@@ -68,10 +68,16 @@ Evolve the pilot into a fuller Discord control center without moving trusted exe
   - `/doctor` now separates worker health from worker session visibility and also shows local session count
   - `/last` now clearly reports whether the shown text came from local preview, worker last-response, or neither
   - the fallback wording is now more explicit when there is no worker session or the worker last-response lookup fails
+- Multi-worker operator visibility is now stronger:
+  - `/workers` now shows per-worker base URL, workspace root, health reachability, and default-versus-active markers
+  - `/doctor` now also shows a compact configured-workers panel beside the current context view
+  - `/worker-bind` and `/register-workspace` now report the selected worker plus live reachability feedback after saving
 - Queue and approval interaction is now more deterministic:
   - if a session is waiting for approval, new prompts are queued instead of starting a competing turn
   - queued prompts can now resume automatically once approval is resolved or lazily expired
   - the prompt command path now returns a clearer queued message for the waiting-approval case
+  - denied approval now clears still-queued prompts for that context instead of letting them continue silently
+  - denied approval returns the session to `idle` rather than leaving an operator-facing `error` state behind
 - `/sessions` moved closer to an operator panel:
   - the view now shows separate stored-session and worker-visible session counts
   - the current context's stored session is marked explicitly
@@ -99,6 +105,11 @@ Evolve the pilot into a fuller Discord control center without moving trusted exe
   - Docker-based NAS bridge under `discord_nas_bridge/`
   - generated deploy bundle under `discord_nas_bridge/app/`
   - manifest-based bundle inventory under `discord_nas_bridge/bundle-manifest.json`
+- NAS Docker build reliability was fixed for the current dependency set:
+  - the NAS Docker image now installs `python3`, `make`, and `g++` in both build and runtime stages
+  - this is needed because `better-sqlite3` is a native Node module and may need local compilation on the NAS image
+  - the Dockerfile now also avoids a second full native rebuild in the runtime stage by reusing the already built production `node_modules`
+  - the repository now also supports a prebuilt DS223j-friendly ARM64 image export path so the NAS does not have to build from source at all
 - root-level packaging guardrail files: `nas-bundle.manifest.json` and `nas-runtime-inventory.json`
   - runtime state under `/data`
 
@@ -162,6 +173,15 @@ Evolve the pilot into a fuller Discord control center without moving trusted exe
 - Thread-drift visibility pass work passed:
   - `npm test -- test/worker-client.test.ts test/command-handlers.test.ts`
   - `npm run build`
+- Multi-worker operator panel plus deny-queue rule pass work passed:
+  - `npm test -- test/command-handlers.test.ts`
+  - `npm run build`
+- NAS Docker native-build fix passed:
+  - `docker build -f discord_nas_bridge/Dockerfile -t codex-discord-bridge:nas-debug discord_nas_bridge`
+- NAS Docker double-build reduction passed:
+  - `docker build -f discord_nas_bridge/Dockerfile -t codex-discord-bridge:nas-debug discord_nas_bridge`
+- DS223j-friendly ARM64 prebuilt image export passed:
+  - `npm run nas:image:arm64:build`
 
 ## Fresh policy note
 
@@ -173,9 +193,9 @@ Evolve the pilot into a fuller Discord control center without moving trusted exe
 ## Next steps
 
 1. Close the remaining worker-side Tier-2 implementation gaps on the real worker side, especially repo status, last response, and approval forwarding parity.
-2. Decide whether queued prompts after denied approval should continue immediately or wait for explicit user retry in the later UX-polish phase.
-3. Keep polishing the operator views where local stored state and worker live state can still diverge, especially around recovery and re-attachment flows.
-4. Smoke test the new mixed Discord flow in a private guild after the worker-side gaps are smaller.
+2. Keep polishing the operator views where local stored state and worker live state can still diverge, especially around recovery and re-attachment flows.
+3. Smoke test the new mixed Discord flow in a private guild after the worker-side gaps are smaller.
+4. Re-upload the fresh NAS bundle plus the exported ARM64 image tar, import the image on the NAS, and use the prebuilt compose path.
 5. Prepare a fresh NAS bundle and redeploy after the Discord smoke succeeds.
 
 ## Operational notes

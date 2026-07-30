@@ -30,6 +30,31 @@ Fo parancsok:
 
 A regi `/new`, `/attach`, `/abort` megmaradt atmeneti aliasnak.
 
+## Multi-worker uzemeltetes
+
+A bridge most mar ket vagy tobb workerrel is atlathatobban kezelheto:
+
+- a `/workers` parancs workerenkent mutatja a `baseUrl`, `workspaceRoot` es health allapotot
+- a default worker es az aktualis kontextus active workerje kulon jelolve latszik
+- a `/worker-bind` es a `/register-workspace` akkor is ment, ha a celworker eppen offline
+- a valasz ilyenkor kulon jelzi, hogy a mentes sikerult, de a worker most nem valaszol
+
+Gyakorlati felallas lehet peldaul:
+
+- `otthon`: NAS-bol elerheto fix worker
+- `munkahely`: a mostani gephez kotott worker
+
+Tracked fajlban maradjanak placeholder hostnevek vagy IP-helyorzo szovegek, peldaul `HOME_WORKER_IP` es `WORK_WORKER_IP`.
+
+## Approval es queue szabaly
+
+A mostani mukodes tudatosan ezt koveti:
+
+- approval varakozas kozben az uj prompt queue-ba kerul
+- approval jovahagyas utan a queue automatikusan tovabb futhat
+- approval elutasitas utan a bent varakozo queued promptok torlodnek
+- deny utan explicit uj prompt kell; nincs csendes automatikus folytatas
+
 ## Biztonsag
 
 - Token, worker secret es valodi `.env` fajl nem kerulhet Gitbe.
@@ -51,6 +76,16 @@ NAS feltoltes elott mindig keszits friss deploy bundle-t:
 ```powershell
 npm run nas:bundle:prepare
 ```
+
+Gyengebb NAS build-kornyezetnel, peldaul DS223j alatt, az ajanlott ut inkabb az elore gyartott ARM64 image:
+
+```powershell
+npm run nas:image:arm64:build
+```
+
+Ez letrehozza a feltoltheto image-archive fajlt itt:
+
+- `dist/nas-images/codex-discord-bridge-nas-arm64.tar`
 
 A bundle mar manifest-alapu. Ha uj top-level runtime fajl vagy mappa kell a NAS-os futashoz, azt elobb vedd fel a `discord_nas_bridge/bundle-manifest.json` fajlba.
 Mostantol ezt egy kulon, verziokezelt NAS inventory is orzi:

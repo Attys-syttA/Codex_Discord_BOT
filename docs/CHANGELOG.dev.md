@@ -2,6 +2,38 @@
 
 Append-only development log for `Codex_Discord_BOT`.
 
+## 2026-06-17 14:07 +02:00
+
+- Cel: A DS223j NAS-hoz kesz ARM64 image-import utat adni, hogy a NAS-nak ne kelljen forrasbol buildelnie a bridge-et.
+- Modositott fajlok: `discord_nas_bridge/docker-compose.yml`, `discord_nas_bridge/docker-compose.build.yml`, `scripts/build-nas-prebuilt-image.mjs`, `package.json`, `discord_nas_bridge/README.hu.md`, `README.md`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm run nas:image:arm64:build`; `npm run nas:bundle:prepare`; `git diff --check`.
+- Eredmeny: A fo NAS compose most mar prebuilt `codex-discord-bridge:nas-arm64` image-re epul, a forrasbol epito ut kulon `docker-compose.build.yml` fajlba kerult, es bekerult egy dedikalt ARM64 export script is. A DS223j-re feltoltheto image archive sikeresen elkeszult itt: `dist/nas-images/codex-discord-bridge-nas-arm64.tar`.
+- Nyitott follow-up: a tar importja a NAS `Kep` nezeteben vagy `docker load` paranccsal, majd a projekt letrehozasa a prebuilt compose utvonalon.
+
+## 2026-06-17 13:32 +02:00
+
+- Cel: Leroviditeni a NAS buildet, hogy a natív `better-sqlite3` ne forduljon le masodszor is a runtime stage-ben.
+- Modositott fajlok: `discord_nas_bridge/Dockerfile`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `docker build -f discord_nas_bridge/Dockerfile -t codex-discord-bridge:nas-debug discord_nas_bridge`; `npm run nas:bundle:prepare`.
+- Eredmeny: A `Dockerfile` most mar a build stage-ben kesziti el a production `node_modules` allapotot, es a runtime stage ezt veszi at keszre. Ezzel a NAS-nak nem kell ugyanazt a natív modult masodjara is ujraforditania. A helyi ellenorzo build a modositott Dockerfile-lal mar gyorsan vegigment.
+- Nyitott follow-up: a friss `discord_nas_bridge` mappa ujrafeltoltese a NAS-ra, majd az elozo beragadt build megszakitasa es a projekt ujrainditasa.
+
+## 2026-06-17 12:00 +02:00
+
+- Cel: A tobb workeres operatori nezetet es a deny utani approval-queue szabalyat repo-local szinten gyakorlatilag lezarni.
+- Modositott fajlok: `src/core/orchestrator.ts`, `test/command-handlers.test.ts`, `README.md`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm test -- test/command-handlers.test.ts`; `npm run build`; `npm test`; `git diff --check`; `rg -n "HOME_WORKER_IP|WORK_WORKER_IP|192\\.168\\.|token|secret|password|apikey|api_key|sharedSecret|shared_secret|x-telecodex-shared-secret" README.md docs/STATE.md docs/CHANGELOG.dev.md .env.example discord_nas_bridge/.env.nas.example`.
+- Eredmeny: A `/workers` most mar workerenkent mutatja a `baseUrl`, `workspaceRoot`, health reachability es default/active jeloleseket. A `/doctor` kapott egy rovid configured-workers panelt, a `/worker-bind` es `/register-workspace` pedig mentes utan visszajelzi, hogy a celworker elerheto-e. Emellett deny eseten a mar bent varakozo queue-elemek torlodnek, a session `idle` allapotba all vissza, auditlog keszul a queue-torlesrol, es nincs csendes automatikus tovabbfutas.
+- Nyitott follow-up: a kovetkezo kulso lepes mar foleg a valodi worker-oldali endpoint parity es a privat Discord + NAS smoke teszt.
+
+## 2026-06-17 13:00 +02:00
+
+- Cel: Megtalalni, miert nem jon letre a NAS projekthez a vegso kontener, csak egy ideiglenes build-kontener.
+- Modositott fajlok: `discord_nas_bridge/Dockerfile`, `discord_nas_bridge/README.hu.md`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `docker build -f discord_nas_bridge/Dockerfile -t codex-discord-bridge:nas-debug discord_nas_bridge`.
+- Eredmeny: A hiba nem a Discord bridge futasi kodjaban volt, hanem a Docker buildben: a `better-sqlite3` natív modulhoz hianyzott a Python es a C/C++ build toolchain a NAS image-bol. A `Dockerfile` most mar telepiti a `python3`, `make` es `g++` csomagokat mind a build, mind a runtime stage-ben, es a NAS Docker build helyben teljesen vegigfutott.
+- Nyitott follow-up: uj NAS bundle generalasa, ujrafeltoltes, majd a projekt kontener letrehozasanak ujraprobalasa a javitott image-gel.
+
 ## 2026-06-16 12:10 +02:00
 
 - Cel: Lathatova tenni, ha a helyi tarolt Codex thread-kep es a worker altal jelentett elo thread-kep szetcsuszik.

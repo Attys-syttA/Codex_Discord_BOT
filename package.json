@@ -24,6 +24,7 @@
     "nas:bundle:check": "node scripts/build-nas-bundle.mjs",
     "nas:bundle:prepare": "node scripts/prepare-nas-bundle.mjs",
     "nas:bundle:docker-build": "docker build -f discord_nas_bridge/Dockerfile -t codex-discord-bridge:nas-bundle discord_nas_bridge",
+    "nas:image:arm64:build": "node scripts/build-nas-prebuilt-image.mjs",
     "secret:scan": "ggshield secret scan path --recursive --yes --use-gitignore ."
   },
   "dependencies": {

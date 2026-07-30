@@ -1,0 +1,14 @@
+services:
+  codex-discord-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: codex-discord-bridge:local
+    container_name: codex-discord-bridge
+    restart: unless-stopped
+    env_file:
+      - .env.nas
+    environment:
+      NODE_OPTIONS: "--dns-result-order=ipv4first"
+    volumes:
+      - ./data:/data

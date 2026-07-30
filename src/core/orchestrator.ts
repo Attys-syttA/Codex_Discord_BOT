@@ -76,6 +76,11 @@ interface ResolvedContext {
   threadBinding?: ThreadBinding;
 }
 
+interface WorkerReachability {
+  ok: boolean;
+  summary: string;
+}
+
 export class BridgeOrchestrator {
   private readonly activeContexts = new Set<DiscordContextKey>();
 
@@ -116,11 +121,11 @@ export class BridgeOrchestrator {
       case "last":
         return response(await this.renderLastResponse(resolved!));
       case "workers":
-        return response(this.renderWorkers(resolved?.worker.id));
+        return response(await this.renderWorkers(resolved?.worker.id));
       case "worker-bind":
-        return response(this.renderWorkerBind(input, resolved));
+        return response(await this.renderWorkerBind(input, resolved));
       case "register-workspace":
-        return response(this.renderRegisterWorkspace(input));
+        return response(await this.renderRegisterWorkspace(input));
       case "unregister-workspace":
         return response(this.renderUnregisterWorkspace(resolved!));
       case "queue":
@@ -222,9 +227,10 @@ export class BridgeOrchestrator {
       detailJson: JSON.stringify({ requestId, applyToChannel }),
     });
 
+    let cancelledQueueItems = 0;
     const sessionAfter = session ? this.options.store.upsertSession({
       ...session,
-      status: approved ? "idle" : "error",
+      status: "idle",
       lastActivityAt: new Date().toISOString(),
     }) : undefined;
 
@@ -251,13 +257,28 @@ export class BridgeOrchestrator {
       });
     }
 
-    if (sessionAfter && sessionAfter.status !== "waiting_approval") {
+    if (!approved) {
+      cancelledQueueItems = this.options.store.clearQueue(request.contextKey);
+      this.options.store.appendAuditLog({
+        contextKey: request.contextKey,
+        actorDiscordUserId,
+        action: "approval_queue_cancelled",
+        result: String(cancelledQueueItems),
+        detailJson: JSON.stringify({ requestId, cancelledQueueItems }),
+      });
+    }
+
+    if (approved && sessionAfter && sessionAfter.status !== "waiting_approval") {
       await this.drainQueueForStoredSession(sessionAfter);
     }
 
     return approved
       ? `Approval ${requestId} approved${applyToChannel ? " and auto-approve was enabled for this channel." : "."}`
-      : `Approval ${requestId} denied.`;
+      : [
+        `Approval ${requestId} denied.`,
+        `Queued prompts cancelled: ${cancelledQueueItems}.`,
+        "Retry with a new explicit prompt when you want to continue.",
+      ].join("\n");
   }
 
   attachApprovalMessage(requestId: number, discordMessageId: string): ApprovalRequest | undefined {
@@ -352,12 +373,7 @@ export class BridgeOrchestrator {
     let workerStatus = "unresolved";
     let workerSessionVisibility = "not checked";
     if (resolved) {
-      try {
-        const health = await this.createClient(resolved.worker).getHealth();
-        workerStatus = String(health.mode ?? "reachable");
-      } catch (error) {
-        workerStatus = `error: ${formatError(error)}`;
-      }
+      workerStatus = (await this.probeWorkerReachability(resolved.worker)).summary;
 
       try {
         const workerSessions = await this.createClient(resolved.worker).listSessions();
@@ -370,6 +386,8 @@ export class BridgeOrchestrator {
         workerSessionVisibility = `unavailable: ${formatError(error)}`;
       }
     }
+
+    const configuredWorkers = await this.renderConfiguredWorkerLines(resolved?.worker.id);
 
     return [
       "Codex Discord bridge doctor",
@@ -387,6 +405,9 @@ export class BridgeOrchestrator {
       `Auto approve: ${binding?.autoApproveMode ?? "off"}`,
       `Session status: ${session?.status ?? "(none)"}`,
       `Local sessions: ${localSessionCount}`,
+      "",
+      "Configured workers",
+      ...configuredWorkers,
     ].join("\n");
   }
 
@@ -460,12 +481,10 @@ export class BridgeOrchestrator {
     ].join("\n");
   }
 
-  private renderWorkers(activeWorkerId?: string): string {
+  private async renderWorkers(activeWorkerId?: string): Promise<string> {
     return [
       "Configured workers",
-      ...this.options.config.workers.map((worker) =>
-        `${worker.id === activeWorkerId ? "*" : "-"} ${worker.id}: ${worker.label} (${worker.baseUrl})`,
-      ),
+      ...await this.renderConfiguredWorkerLines(activeWorkerId),
     ].join("\n");
   }
 
@@ -619,7 +638,7 @@ export class BridgeOrchestrator {
     }
   }
 
-  private renderWorkerBind(input: BridgeCommandInput, resolved: ResolvedContext | undefined): string {
+  private async renderWorkerBind(input: BridgeCommandInput, resolved: ResolvedContext | undefined): Promise<string> {
     const workerId = input.options?.worker_id?.trim();
     if (!workerId) {
       return "Missing required option: worker_id";
@@ -646,10 +665,17 @@ export class BridgeOrchestrator {
       ...base,
       workerId: worker.id,
     });
-    return `Project channel ${resolved.projectChannelId} is now bound to worker ${next.workerId}.`;
+    const reachability = await this.probeWorkerReachability(worker);
+    return [
+      "Worker binding saved.",
+      `Project channel: ${resolved.projectChannelId}`,
+      `Workspace: ${next.workspace}`,
+      `Worker: ${next.workerId}`,
+      `Worker reachability: ${reachability.summary}`,
+    ].join("\n");
   }
 
-  private renderRegisterWorkspace(input: BridgeCommandInput): string {
+  private async renderRegisterWorkspace(input: BridgeCommandInput): Promise<string> {
     const workspace = input.options?.workspace?.trim();
     const workerId = input.options?.worker_id?.trim() || this.options.config.defaultWorkerId;
     if (!workspace) {
@@ -675,12 +701,14 @@ export class BridgeOrchestrator {
       autoPromptEnabled: true,
       autoApproveMode: "off",
     });
+    const reachability = await this.probeWorkerReachability(worker);
 
     return [
       "Workspace binding saved.",
       `Project channel: ${projectChannelId}`,
       `Workspace: ${resolvedWorkspace}`,
       `Worker: ${worker.id}`,
+      `Worker reachability: ${reachability.summary}`,
     ].join("\n");
   }
 
@@ -1162,6 +1190,41 @@ export class BridgeOrchestrator {
       worker,
       ...(threadBinding ? { threadBinding } : {}),
     };
+  }
+
+  private async probeWorkerReachability(worker: WorkerTarget): Promise<WorkerReachability> {
+    try {
+      const health = await this.createClient(worker).getHealth();
+      return {
+        ok: true,
+        summary: `reachable (${String(health.mode ?? "ok")})`,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        summary: `unreachable: ${formatError(error)}`,
+      };
+    }
+  }
+
+  private async renderConfiguredWorkerLines(activeWorkerId?: string): Promise<string[]> {
+    const lines: string[] = [];
+    for (const worker of this.options.config.workers) {
+      const reachability = await this.probeWorkerReachability(worker);
+      const flags = [
+        worker.id === this.options.config.defaultWorkerId ? "default" : undefined,
+        worker.id === activeWorkerId ? "active" : undefined,
+      ].filter(Boolean).join(", ");
+      lines.push([
+        worker.id,
+        worker.label,
+        worker.baseUrl,
+        `workspaceRoot=${worker.workspaceRoot ?? "(not set)"}`,
+        `health=${reachability.summary}`,
+        ...(flags ? [`flags=${flags}`] : []),
+      ].join(" | "));
+    }
+    return lines;
   }
 }
 

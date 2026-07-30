@@ -11,7 +11,9 @@ Ez a mappa a NAS-on futtatando Discord bridge csomag helye.
 ## Fajlok
 
 - `Dockerfile`: tobbfazisu Node.js 20 build es production runtime
-- `docker-compose.yml`: NAS futtatas `restart: unless-stopped` moddal
+  - a jelenlegi image telepit Python + `make` + `g++` eszkozoket is, mert a `better-sqlite3` natív Node modult fordit a build soran
+- `docker-compose.yml`: prebuilt NAS image-re alapozott futtatas `restart: unless-stopped` moddal
+- `docker-compose.build.yml`: forrasbol epito alternativa, ha valaki kifejezetten helyben akar buildelni
 - `.env.nas.example`: minta konfiguracio fake ertekekkel
 - `.dockerignore`: kizarja a valodi `.env.nas` fajlt a Docker build contextbol
 - `app/`: generalt build bundle, amelyet feltoltes elott a `scripts/prepare-nas-bundle.ps1` keszit el
@@ -19,6 +21,8 @@ Ez a mappa a NAS-on futtatando Discord bridge csomag helye.
 - `data/`: helyi runtime allapot, peldaul `sessions.json`
 
 ## Elso inditas NAS-on
+
+DS223j-nel az ajanlott ut a prebuilt ARM64 image import. Ez lenyegesen jobb, mint a NAS-on forrasbol forditani a natív Node modulokat.
 
 1. A Windows gepen, a repo gyokerebol keszits friss NAS bundle-t:
 
@@ -34,21 +38,38 @@ npm run nas:bundle:prepare
 ```
 ```
 
-2. Toltsd fel a teljes `discord_nas_bridge` mappat a NAS megosztott mappajaba. Fontos, hogy az `app/` almappa is felkeruljon.
-3. A NAS-on, a feltoltott mappaban keszits sajat env fajlt:
+2. Ugyanitt epits prebuilt ARM64 image-et a DS223j-hez:
+
+```powershell
+npm run nas:image:arm64:build
+```
+
+Ez letrehozza ezt a fajlt:
+
+- `dist/nas-images/codex-discord-bridge-nas-arm64.tar`
+
+3. Toltsd fel a teljes `discord_nas_bridge` mappat a NAS megosztott mappajaba. Fontos, hogy az `app/` almappa is felkeruljon.
+4. Toltsd fel a `dist/nas-images/codex-discord-bridge-nas-arm64.tar` fajlt is a NAS-ra.
+5. A NAS-on importald a kepet a `Kep` nezetben, vagy SSH-bol:
+
+```sh
+docker load -i codex-discord-bridge-nas-arm64.tar
+```
+
+6. A NAS-on, a feltoltott mappaban keszits sajat env fajlt:
 
 ```sh
 cp .env.nas.example .env.nas
 ```
 
-4. Toltsd ki a valodi ertekeket a `.env.nas` fajlban.
-5. A worker URL a NAS nezopontjabol legyen elerheto, peldaul:
+7. Toltsd ki a valodi ertekeket a `.env.nas` fajlban.
+8. A worker URL a NAS nezopontjabol legyen elerheto, peldaul:
 
 ```env
 DISCORD_WORKERS_JSON=[{"id":"worker-home","label":"Otthoni worker","baseUrl":"http://worker-home.lan:8787","sharedSecretEnv":"DISCORD_WORKER_SHARED_SECRET_HOME","workspaceRoot":"E:\\workspace-home"}]
 ```
 
-6. Ha uj Discord forumokat szeretnel automatikusan repohoz kotni, add meg az alias tablazatot:
+9. Ha uj Discord forumokat szeretnel automatikusan repohoz kotni, add meg az alias tablazatot:
 
 ```env
 DISCORD_AUTO_WORKSPACE_ALIASES_JSON={"codex_discord_bot":"Codex_Discord_BOT"}
@@ -56,17 +77,23 @@ DISCORD_AUTO_WORKSPACE_ALIASES_JSON={"codex_discord_bot":"Codex_Discord_BOT"}
 
 Ilyenkor a nem kezzel mapelt forum nevebol dolgozik a bridge, de a worker sajat `workspaceRoot` gyokeret hasznalja. A kezi `DISCORD_CHANNEL_MAPPINGS_JSON` bejegyzesek mindig elsoseget elveznek.
 
-7. Inditas a NAS-on, a feltoltott mappabol:
+10. Inditas a NAS-on, a feltoltott mappabol:
 
 ```sh
-docker compose up -d --build
+docker compose up -d
 ```
 
-8. Log ellenorzes:
+11. Log ellenorzes:
 
 ```sh
 docker compose logs -f codex-discord-bridge
 ```
+
+Ha a projekt nem hozza letre a vegso kontenert, csak egy ideiglenes build-kontener jelenik meg, akkor az elso gyanus pont a Docker build. Ebben a repo-ban a legfontosabb ilyen buildfugges a `better-sqlite3`, amihez a NAS image-ben Python es C/C++ build eszkozok kellenek. A DS223j eseteben emiatt kifejezetten a prebuilt image import az ajanlott fo ut.
+
+## Forrasbol epito tartalek ut
+
+Ha valamiert megis a NAS-on akarsz buildelni, a `docker-compose.build.yml` fajlt hasznald. Ez lassabb, es a DS223j hardveren jo esellyel gyengebb elmenyt ad, mint az elore gyartott ARM64 image import.
 
 ## Munkahely vs otthon worker
 

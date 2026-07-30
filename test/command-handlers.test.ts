@@ -32,6 +32,12 @@ const env = {
       baseUrl: "http://127.0.0.1:8787",
       workspaceRoot: "..",
     },
+    {
+      id: "worker-office",
+      label: "Office worker",
+      baseUrl: "http://127.0.0.1:8788",
+      workspaceRoot: "D:\\workspace-office",
+    },
   ]),
   DISCORD_DEFAULT_WORKER_ID: "worker-home",
   DISCORD_APPROVAL_TTL_MS: "1800000",
@@ -111,17 +117,23 @@ describe("BridgeOrchestrator", () => {
     };
   }
 
-  function createHarness(workerOverrides: Partial<BridgeWorkerClient> = {}) {
+  function createHarness(
+    workerOverrides: Partial<BridgeWorkerClient> | Record<string, Partial<BridgeWorkerClient>> = {},
+    envOverrides: Partial<typeof env> = {},
+  ) {
     const tempDir = mkdtempSync(join(tmpdir(), "codex-discord-bot-"));
     tempDirs.push(tempDir);
     const store = new SqliteStateStore({
       databasePath: join(tempDir, "bridge.sqlite"),
     });
     stores.push(store);
+    const workerOverrideMap = isWorkerOverrideMap(workerOverrides)
+      ? workerOverrides
+      : { "worker-home": workerOverrides };
     const orchestrator = new BridgeOrchestrator({
-      config: loadConfig(env, { configDir: CONFIG_DIR }),
+      config: loadConfig({ ...env, ...envOverrides }, { configDir: CONFIG_DIR }),
       store,
-      createWorkerClient: () => createMockWorker(workerOverrides),
+      createWorkerClient: (worker) => createMockWorker(workerOverrideMap[worker.id] ?? {}),
     });
     return { store, orchestrator };
   }
@@ -333,12 +345,88 @@ describe("BridgeOrchestrator", () => {
     const { orchestrator } = createHarness();
     const response = await orchestrator.handleCommand({ ...baseInput, commandName: "doctor" });
 
-    expect(response.content).toContain("Worker health: remote-worker");
+    expect(response.content).toContain("Worker health: reachable (remote-worker)");
     expect(response.content).toContain("Worker session visibility: visible (1 for workspace)");
     expect(response.content).toContain("Storage: SQLite");
     expect(response.content).toContain("Prompt mode: slash + normal messages");
     expect(response.content).toContain("Auto approve: off");
     expect(response.content).toContain("Local sessions: 0");
+    expect(response.content).toContain("Configured workers");
+    expect(response.content).toContain("worker-home | Home worker");
+    expect(response.content).toContain("flags=default, active");
+    expect(response.content).toContain("worker-office | Office worker");
+  });
+
+  it("renders /workers with reachability, workspace roots, and worker flags", async () => {
+    const { orchestrator } = createHarness({
+      "worker-office": {
+        getHealth: async () => {
+          throw new Error("office worker asleep");
+        },
+      },
+    });
+
+    const response = await orchestrator.handleCommand({ ...baseInput, commandName: "workers" });
+
+    expect(response.content).toContain("Configured workers");
+    expect(response.content).toContain("worker-home | Home worker | http://127.0.0.1:8787");
+    expect(response.content).toContain("workspaceRoot=C:\\workspace");
+    expect(response.content).toContain("health=reachable (remote-worker)");
+    expect(response.content).toContain("flags=default, active");
+    expect(response.content).toContain("worker-office | Office worker | http://127.0.0.1:8788");
+    expect(response.content).toContain("workspaceRoot=D:\\workspace-office");
+    expect(response.content).toContain("health=unreachable: office worker asleep");
+  });
+
+  it("saves worker-bind even when the target worker is offline and reports reachability", async () => {
+    const { orchestrator, store } = createHarness({
+      "worker-office": {
+        getHealth: async () => {
+          throw new Error("office worker asleep");
+        },
+      },
+    });
+
+    const response = await orchestrator.handleCommand({
+      ...baseInput,
+      commandName: "worker-bind",
+      options: { worker_id: "worker-office" },
+    });
+
+    expect(store.getChannelBinding(baseInput.guildId, "100000000000000101")?.workerId).toBe("worker-office");
+    expect(response.content).toContain("Worker binding saved.");
+    expect(response.content).toContain("Project channel: 100000000000000101");
+    expect(response.content).toContain(`Workspace: ${REPO_WORKSPACE}`);
+    expect(response.content).toContain("Worker: worker-office");
+    expect(response.content).toContain("Worker reachability: unreachable: office worker asleep");
+  });
+
+  it("reports worker reachability when register-workspace targets an offline worker", async () => {
+    const { orchestrator, store } = createHarness({
+      "worker-office": {
+        getHealth: async () => {
+          throw new Error("office worker asleep");
+        },
+      },
+    });
+
+    const response = await orchestrator.handleCommand({
+      ...baseInput,
+      commandName: "register-workspace",
+      options: {
+        workspace: "email_header_analyzer",
+        worker_id: "worker-office",
+      },
+    });
+
+    const binding = store.getChannelBinding(baseInput.guildId, "100000000000000101");
+    expect(binding?.workerId).toBe("worker-office");
+    expect(binding?.workspace).toBe("D:\\workspace-office\\email_header_analyzer");
+    expect(response.content).toContain("Workspace binding saved.");
+    expect(response.content).toContain("Project channel: 100000000000000101");
+    expect(response.content).toContain("Workspace: D:\\workspace-office\\email_header_analyzer");
+    expect(response.content).toContain("Worker: worker-office");
+    expect(response.content).toContain("Worker reachability: unreachable: office worker asleep");
   });
 
   it("shows the local preview first in /last", async () => {
@@ -540,4 +628,53 @@ describe("BridgeOrchestrator", () => {
     expect(store.countQueuedItems("100000000000000001:100000000000000101:100000000000000201")).toBe(0);
     expect(store.getSession("100000000000000001:100000000000000101:100000000000000201")?.status).toBe("idle");
   });
+
+  it("cancels queued prompts and resets the session to idle after approval denial", async () => {
+    const seenPrompts: string[] = [];
+    const { orchestrator, store } = createHarness({
+      prompt: async (_sessionId, input, callbacks) => {
+        const text = typeof input === "object" && input && "text" in input ? String(input.text) : String(input);
+        seenPrompts.push(text);
+        if (seenPrompts.length === 1) {
+          callbacks?.onApprovalRequest?.("worker_question", { question: "Continue?" });
+          return;
+        }
+        callbacks?.onTextDelta?.("This should not run after denial.");
+      },
+    });
+
+    await orchestrator.handleCommand({ ...baseInput, commandName: "session-new" });
+    await orchestrator.handleCommand({
+      ...baseInput,
+      commandName: "ask",
+      options: { prompt: "Elso kerdes" },
+    });
+    await orchestrator.handleCommand({
+      ...baseInput,
+      commandName: "ask",
+      options: { prompt: "Masodik kerdes" },
+    });
+
+    const approval = store.listPendingApprovals("100000000000000001:100000000000000101:100000000000000201")[0];
+    expect(approval).toBeTruthy();
+
+    const result = await orchestrator.handleApprovalDecision(approval!.id, false, baseInput.userId, false);
+
+    expect(result).toContain(`Approval ${approval!.id} denied.`);
+    expect(result).toContain("Queued prompts cancelled: 1.");
+    expect(result).toContain("Retry with a new explicit prompt when you want to continue.");
+    expect(seenPrompts).toEqual(["Elso kerdes"]);
+    expect(store.countQueuedItems("100000000000000001:100000000000000101:100000000000000201")).toBe(0);
+    expect(store.getSession("100000000000000001:100000000000000101:100000000000000201")?.status).toBe("idle");
+    expect(store.getApprovalRequest(approval!.id)?.status).toBe("denied");
+    expect(store.listAuditLog("100000000000000001:100000000000000101:100000000000000201").map((entry) => entry.action)).toEqual(
+      expect.arrayContaining(["approval_denied", "approval_queue_cancelled"]),
+    );
+  });
 });
+
+function isWorkerOverrideMap(
+  value: Partial<BridgeWorkerClient> | Record<string, Partial<BridgeWorkerClient>>,
+): value is Record<string, Partial<BridgeWorkerClient>> {
+  return Object.values(value).some((candidate) => typeof candidate === "object" && candidate !== null);
+}
