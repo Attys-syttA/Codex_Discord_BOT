@@ -2,6 +2,14 @@
 
 Append-only development log for `Codex_Discord_BOT`.
 
+## 2026-07-31 08:08 +02:00
+
+- Cel: A GitHub Actions `CI` piros futasainak ovatos javitasa a `main` agon.
+- Modositott fajlok: `scripts/nas-runtime-inventory-check.mjs`, `test/nas-runtime-inventory.test.ts`, `package-lock.json`, `nas-runtime-inventory.json`, `docs/STATE.md`, `docs/CHANGELOG.dev.md`.
+- Futtatott parancsok: `npm update discord.js @discordjs/rest postcss`; `npm run nas:inventory:write`; `npm test -- test/nas-runtime-inventory.test.ts`; `npm run audit:deps`; `npm run nas:inventory:check`; `npm run nas:bundle:prepare`; `npm run check`; `npm run plans:check`; `npm run nas:bundle:docker-build`; `git diff --check`; `ggshield secret scan path --recursive --yes --use-gitignore .`.
+- Eredmeny: A dependency audit mar 0 serulekenyseget jelez; a NAS inventory generator most mar ujrageneralaskor is `runtime-optional` besorolason tartja a `discord_nas_bridge/docker-compose.build.yml` fallback compose fajlt; a NAS bundle prepare es Docker build helyben zold.
+- Nyitott follow-up: commit es push utan meg kell varni, hogy a GitHub Actions friss `CI` futasa is zoldre valtson.
+
 ## 2026-06-17 14:07 +02:00
 
 - Cel: A DS223j NAS-hoz kesz ARM64 image-import utat adni, hogy a NAS-nak ne kelljen forrasbol buildelnie a bridge-et.

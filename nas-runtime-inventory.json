@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-30T14:06:45.625Z",
+  "generatedAt": "2026-07-31T06:09:17.139Z",
   "source": {
     "fileSet": "repo-files-excluding-local-state-build-output-and-generated-nas-staging",
     "dateField": "filesystem-mtime",
@@ -180,7 +180,7 @@
       "family": "developer-only",
       "status": "classified",
       "reason": "Repository documentation not shipped as NAS runtime payload.",
-      "lastModifiedAt": "2026-06-17T12:07:28.109Z"
+      "lastModifiedAt": "2026-07-31T06:09:13.291Z"
     },
     {
       "path": "docs/STATE.md",
@@ -188,7 +188,7 @@
       "family": "developer-only",
       "status": "classified",
       "reason": "Repository documentation not shipped as NAS runtime payload.",
-      "lastModifiedAt": "2026-06-17T12:07:20.046Z"
+      "lastModifiedAt": "2026-07-31T06:08:23.203Z"
     },
     {
       "path": "docs/TERV_STATUS_SABLON.md",
@@ -300,7 +300,7 @@
       "family": "runtime-optional",
       "status": "classified",
       "reason": "Versioned NAS runtime inventory used as packaging guardrail.",
-      "lastModifiedAt": "2026-06-17T12:07:49.460Z"
+      "lastModifiedAt": "2026-07-31T06:08:38.171Z"
     },
     {
       "path": "package-lock.json",
@@ -308,7 +308,7 @@
       "family": "runtime-required",
       "status": "classified",
       "reason": "Required top-level NAS bundle source input.",
-      "lastModifiedAt": "2026-06-15T10:19:44.752Z"
+      "lastModifiedAt": "2026-07-31T06:06:02.874Z"
     },
     {
       "path": "package.json",
@@ -364,7 +364,7 @@
       "family": "developer-only",
       "status": "classified",
       "reason": "Packaging or repo helper script not shipped inside the NAS runtime payload.",
-      "lastModifiedAt": "2026-06-15T10:36:43.032Z"
+      "lastModifiedAt": "2026-07-31T06:05:57.305Z"
     },
     {
       "path": "scripts/prepare-nas-bundle.mjs",
@@ -556,7 +556,7 @@
       "family": "test-only",
       "status": "classified",
       "reason": "Test file not shipped in the NAS runtime bundle.",
-      "lastModifiedAt": "2026-06-15T10:38:38.718Z"
+      "lastModifiedAt": "2026-07-31T06:06:28.418Z"
     },
     {
       "path": "test/session-registry.test.ts",

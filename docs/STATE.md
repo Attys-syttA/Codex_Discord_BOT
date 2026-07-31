@@ -2,7 +2,7 @@
 
 ## Current status
 
-- Date: 2026-06-17
+- Date: 2026-07-31
 - Repository: `Codex_Discord_BOT`
 - Phase: Discord control-center expansion on top of the pilot
 - Runtime code: slash + normal message prompt flow, worker-backed session handling, SQLite state store, queue basics, hardened approval workflow, NAS Docker bridge
@@ -182,6 +182,10 @@ Evolve the pilot into a fuller Discord control center without moving trusted exe
   - `docker build -f discord_nas_bridge/Dockerfile -t codex-discord-bridge:nas-debug discord_nas_bridge`
 - DS223j-friendly ARM64 prebuilt image export passed:
   - `npm run nas:image:arm64:build`
+- GitHub Actions CI repair passed locally:
+  - dependency audit now reports 0 vulnerabilities after lockfile-only transitive updates around `discord.js`, `@discordjs/rest`, `undici`, and `postcss`
+  - the NAS inventory generator now keeps `discord_nas_bridge/docker-compose.build.yml` classified as `runtime-optional`
+  - `npm run nas:bundle:prepare` and `npm run nas:bundle:docker-build` both pass locally
 
 ## Fresh policy note
 
@@ -197,6 +201,7 @@ Evolve the pilot into a fuller Discord control center without moving trusted exe
 3. Smoke test the new mixed Discord flow in a private guild after the worker-side gaps are smaller.
 4. Re-upload the fresh NAS bundle plus the exported ARM64 image tar, import the image on the NAS, and use the prebuilt compose path.
 5. Prepare a fresh NAS bundle and redeploy after the Discord smoke succeeds.
+6. After the CI repair commit is pushed, confirm the GitHub Actions `CI` workflow is green on `main`.
 
 ## Operational notes
 

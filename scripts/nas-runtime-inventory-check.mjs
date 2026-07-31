@@ -197,6 +197,9 @@ export function classifyFile(relativePath, manifestContext = { docsPayload: new 
     if (file === "discord_nas_bridge/bundle-manifest.json") {
       return ["runtime-optional", "Legacy source bundle manifest retained as a packaging guardrail input."];
     }
+    if (file === "discord_nas_bridge/docker-compose.build.yml") {
+      return ["runtime-optional", "Optional NAS bridge source-build compose file kept for fallback operation."];
+    }
   }
   if (file.startsWith("scripts/")) {
     return ["developer-only", "Packaging or repo helper script not shipped inside the NAS runtime payload."];

@@ -56,6 +56,25 @@ describe("nas-runtime-inventory-check", () => {
 
     expect(failed).toBe(true);
   });
+
+  it("keeps the optional NAS source-build compose file classified when regenerating inventory", () => {
+    const root = createTempRepo();
+    mkdirSync(join(root, "discord_nas_bridge"), { recursive: true });
+    writeFileSync(join(root, "discord_nas_bridge", "docker-compose.build.yml"), "services: {}\n", "utf8");
+    writeManifest(root);
+
+    runNodeScript("scripts/nas-runtime-inventory-check.mjs", ["--root=.", "--write"], root);
+
+    const inventory = JSON.parse(readFileSync(join(root, "nas-runtime-inventory.json"), "utf8")) as {
+      files: Array<{ path: string; family: string; status: string }>;
+    };
+    const composeEntry = inventory.files.find((entry) => entry.path === "discord_nas_bridge/docker-compose.build.yml");
+
+    expect(composeEntry).toMatchObject({
+      family: "runtime-optional",
+      status: "classified",
+    });
+  });
 });
 
 function createTempRepo(): string {
